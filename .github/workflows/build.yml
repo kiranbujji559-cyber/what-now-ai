@@ -1,0 +1,41 @@
+name: Build WHAT NOW AI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create Flutter project
+        run: |
+          git clone https://github.com/${{ github.repository }}.git app
+          cd app
+          rm -rf .git
+          flutter --version || true
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Generate Flutter app
+        run: |
+          cd app
+          flutter create . --org com.whatnowai --project-name what_now_ai
+
+      - name: Build APK
+        run: |
+          cd app
+          flutter pub get
+          flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: WHAT-NOW-AI-APK
+          path: app/build/app/outputs/flutter-apk/app-release.apk
