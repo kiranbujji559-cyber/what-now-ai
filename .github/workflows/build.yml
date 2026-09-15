@@ -26,7 +26,9 @@ jobs:
       - name: Generate Flutter app
         run: |
           cd app
+          cp lib/main.dart /tmp/what_now_main.dart
           flutter create . --org com.whatnowai --project-name what_now_ai
+          cp /tmp/what_now_main.dart lib/main.dart
 
       - name: Build APK
         run: |
