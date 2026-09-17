@@ -694,4 +694,4 @@ class AnalysisScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+          ],
