@@ -11,24 +11,935 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Create Flutter project
-        run: |
-          git clone https://github.com/${{ github.repository }}.git app
-          cd app
-          rm -rf .git
-          flutter --version || true
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
-      - name: Generate Flutter app
+      - name: Create clean Flutter project
+        run: |
+          mkdir app
+          cd app
+          flutter create . --org com.whatnowai --project-name what_now_ai
+          rm -f lib/main.dart
+
+      - name: Create WHAT NOW AI app
         run: |
           cd app
-          cp lib/main.dart /tmp/what_now_main.dart
-          flutter create . --org com.whatnowai --project-name what_now_ai
-          cp /tmp/what_now_main.dart lib/main.dart
+          cat > lib/main.dart <<'DART'
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+void main() {
+  runApp(const WhatNowApp());
+}
+
+class WhatNowApp extends StatelessWidget {
+  const WhatNowApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'WHAT NOW AI',
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF08090D),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF7C5CFF),
+          brightness: Brightness.dark,
+        ),
+      ),
+      home: const SplashPage(),
+    );
+  }
+}
+
+class SplashPage extends StatefulWidget {
+  const SplashPage({super.key});
+
+  @override
+  State<SplashPage> createState() => _SplashPageState();
+}
+
+class _SplashPageState extends State<SplashPage> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const HomePage(),
+        ),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Logo(size: 86),
+            SizedBox(height: 24),
+            Text(
+              'WHAT NOW',
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 4,
+              ),
+            ),
+            SizedBox(height: 6),
+            Text(
+              'AI',
+              style: TextStyle(
+                color: Color(0xFF9B82FF),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 6,
+              ),
+            ),
+            SizedBox(height: 18),
+            Text(
+              'Send anything. Get clear actions.',
+              style: TextStyle(color: Colors.white54),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final TextEditingController controller = TextEditingController();
+
+  void message(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(text),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> paste() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
+
+    if (data != null && data.text != null && data.text!.trim().isNotEmpty) {
+      controller.text = data.text!;
+      message('Pasted successfully.');
+    } else {
+      message('Clipboard is empty.');
+    }
+  }
+
+  void analyze() {
+    if (controller.text.trim().isEmpty) {
+      message('Paste or type something first.');
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AnalysisPage(
+          text: controller.text.trim(),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: const Color(0xFF111218),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.history),
+            label: 'History',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            label: 'Settings',
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Logo(size: 45),
+                  SizedBox(width: 12),
+                  Text(
+                    'WHAT NOW AI',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 42),
+              const Text(
+                'Anything confusing?',
+                style: TextStyle(
+                  fontSize: 31,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Send it to WHAT NOW.',
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.white54,
+                ),
+              ),
+              const SizedBox(height: 28),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF12141B),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: TextField(
+                  controller: controller,
+                  minLines: 7,
+                  maxLines: 10,
+                  decoration: const InputDecoration(
+                    hintText:
+                        'Paste a message, bill, email, offer or warning...',
+                    hintStyle: TextStyle(color: Colors.white38),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.all(20),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: SmallButton(
+                      icon: Icons.content_paste,
+                      title: 'Paste',
+                      onTap: paste,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SmallButton(
+                      icon: Icons.photo_outlined,
+                      title: 'Photo',
+                      onTap: () => message('Photo feature coming next.'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SmallButton(
+                      icon: Icons.attach_file,
+                      title: 'File',
+                      onTap: () => message('File feature coming next.'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                height: 58,
+                child: ElevatedButton(
+                  onPressed: analyze,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF7C5CFF),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'WHAT NOW?',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Icon(Icons.arrow_forward_rounded),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 35),
+              const Text(
+                'TRY IT WITH',
+                style: TextStyle(
+                  color: Colors.white38,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 14),
+              ExampleCard(
+                icon: Icons.receipt_long_outlined,
+                title: 'A bill or payment',
+                subtitle: 'Do I need to pay this?',
+                onTap: () {
+                  controller.text =
+                      'Your payment of ₹4,999 is due by 25 September.';
+                },
+              ),
+              ExampleCard(
+                icon: Icons.work_outline,
+                title: 'A job offer',
+                subtitle: 'Is this offer safe?',
+                onTap: () {
+                  controller.text =
+                      'You have been selected. Pay ₹2,000 registration fee to start.';
+                },
+              ),
+              ExampleCard(
+                icon: Icons.warning_amber_outlined,
+                title: 'A suspicious message',
+                subtitle: 'What should I do?',
+                onTap: () {
+                  controller.text =
+                      'Your account will be blocked today. Click this link immediately.';
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AnalysisPage extends StatelessWidget {
+  final String text;
+
+  const AnalysisPage({
+    super.key,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'WHAT NOW?',
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
+        backgroundColor: Colors.transparent,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Here is what matters.',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              text,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white54,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 22),
+            const InfoCard(
+              icon: Icons.info_outline,
+              title: 'WHAT IS THIS?',
+              text:
+                  'This information may require your attention. Verify the sender and important details.',
+            ),
+            const SizedBox(height: 12),
+            const InfoCard(
+              icon: Icons.bolt,
+              title: 'URGENCY',
+              text: 'Check the exact deadline before acting.',
+            ),
+            const SizedBox(height: 12),
+            const InfoCard(
+              icon: Icons.shield_outlined,
+              title: 'RISK',
+              text:
+                  'Do not pay or share sensitive information until the source is verified.',
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF171321),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'WHAT SHOULD I DO NOW?',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  SizedBox(height: 18),
+                  StepItem(
+                    number: '1',
+                    text: 'Verify the sender and details.',
+                  ),
+                  StepItem(
+                    number: '2',
+                    text: 'Check the deadline.',
+                  ),
+                  StepItem(
+                    number: '3',
+                    text: 'Decide only after verification.',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            const IgnoreCard(),
+            const SizedBox(height: 20),
+            const Text(
+              'NEXT 3 STEPS',
+              style: TextStyle(
+                color: Colors.white38,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const NextStep(
+              number: '01',
+              title: 'VERIFY',
+              text: 'Confirm that the information is genuine.',
+            ),
+            const NextStep(
+              number: '02',
+              title: 'DECIDE',
+              text: 'Consider deadline, cost and risk.',
+            ),
+            const NextStep(
+              number: '03',
+              title: 'ACT',
+              text: 'Take the appropriate next step.',
+            ),
+            const SizedBox(height: 15),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF12141A),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'DRAFT REPLY',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'Thanks for the information. I will verify the details and get back to you.',
+                    style: TextStyle(
+                      color: Colors.white60,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class IgnoreCard extends StatefulWidget {
+  const IgnoreCard({super.key});
+
+  @override
+  State<IgnoreCard> createState() => _IgnoreCardState();
+}
+
+class _IgnoreCardState extends State<IgnoreCard> {
+  bool open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF181318),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            onTap: () {
+              setState(() {
+                open = !open;
+              });
+            },
+            leading: const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.redAccent,
+            ),
+            title: const Text(
+              'WHAT IF I DO NOTHING?',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            trailing: Icon(
+              open
+                  ? Icons.keyboard_arrow_up
+                  : Icons.keyboard_arrow_down,
+            ),
+          ),
+          if (open)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Text(
+                'You may miss a deadline, lose an opportunity or face additional charges. Check the original information before deciding.',
+                style: TextStyle(
+                  color: Colors.white54,
+                  height: 1.5,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class HistoryPage extends StatelessWidget {
+  const HistoryPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'History',
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
+      ),
+      body: const Center(
+        child: Text(
+          'Your analyses will appear here.',
+          style: TextStyle(color: Colors.white38),
+        ),
+      ),
+    );
+  }
+}
+
+class SettingsPage extends StatelessWidget {
+  const SettingsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Settings',
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: const [
+          SettingRow(
+            icon: Icons.notifications_none,
+            title: 'Notifications',
+          ),
+          SettingRow(
+            icon: Icons.lock_outline,
+            title: 'Privacy',
+          ),
+          SettingRow(
+            icon: Icons.language,
+            title: 'Language',
+          ),
+          SettingRow(
+            icon: Icons.star_outline,
+            title: 'Premium',
+          ),
+          SettingRow(
+            icon: Icons.help_outline,
+            title: 'Help & feedback',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class Logo extends StatelessWidget {
+  final double size;
+
+  const Logo({
+    super.key,
+    this.size = 50,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(size * 0.25),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF9B82FF),
+            Color(0xFF6042D8),
+          ],
+        ),
+      ),
+      child: Icon(
+        Icons.bolt_rounded,
+        color: Colors.white,
+        size: size * 0.58,
+      ),
+    );
+  }
+}
+
+class SmallButton extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  const SmallButton({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF15171F),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 21, color: Colors.white70),
+            const SizedBox(height: 6),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white54,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ExampleCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const ExampleCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: const Color(0xFF111319),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: const Color(0xFF9B82FF),
+              size: 27,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: Colors.white38,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              color: Colors.white30,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class InfoCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String text;
+
+  const InfoCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF12141A),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                color: const Color(0xFF9B82FF),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white60,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class StepItem extends StatelessWidget {
+  final String number;
+  final String text;
+
+  const StepItem({
+    super.key,
+    required this.number,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 13),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 14,
+            backgroundColor: const Color(0xFF7C5CFF),
+            child: Text(
+              number,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(color: Colors.white60),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class NextStep extends StatelessWidget {
+  final String number;
+  final String title;
+  final String text;
+
+  const NextStep({
+    super.key,
+    required this.number,
+    required this.title,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111319),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Text(
+            number,
+            style: const TextStyle(
+              color: Color(0xFF9B82FF),
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  text,
+                  style: const TextStyle(
+                    color: Colors.white45,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SettingRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+
+  const SettingRow({
+    super.key,
+    required this.icon,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: const Color(0xFF9B82FF),
+      ),
+      title: Text(title),
+      trailing: const Icon(
+        Icons.chevron_right,
+        color: Colors.white30,
+      ),
+    );
+  }
+}
+DART
 
       - name: Build APK
         run: |
@@ -36,8 +947,15 @@ jobs:
           flutter pub get
           flutter build apk --release
 
-      - name: Upload APK
+      - name: Build AAB
+        run: |
+          cd app
+          flutter build appbundle --release
+
+      - name: Upload APK and AAB
         uses: actions/upload-artifact@v4
         with:
-          name: WHAT-NOW-AI-APK
-          path: app/build/app/outputs/flutter-apk/app-release.apk
+          name: WHAT-NOW-AI-RELEASE
+          path: |
+            app/build/app/outputs/flutter-apk/app-release.apk
+            app/build/app/outputs/bundle/release/app-release.aab
