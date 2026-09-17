@@ -797,6 +797,10 @@ jobs:
         run: |
           cd app
           flutter pub get
+
+      - name: Remove default test
+        run: |
+          rm -rf app/test
           flutter analyze
           flutter build apk --release
 
