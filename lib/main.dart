@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -12,23 +11,26 @@ class WhatNowAI extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'WHAT NOW AI',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF080914),
+        scaffoldBackgroundColor: const Color(0xFF090A0F),
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF7C5CFF),
           brightness: Brightness.dark,
         ),
+        fontFamily: 'sans',
       ),
       home: const SplashScreen(),
     );
   }
 }
 
-// ================= SPLASH =================
+// ============================================================
+// SPLASH SCREEN
+// ============================================================
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -39,32 +41,50 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController animation;
+  late AnimationController _controller;
+  late Animation<double> _fade;
+  late Animation<double> _scale;
 
   @override
   void initState() {
     super.initState();
 
-    animation = AnimationController(
+    _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..forward();
+    );
 
-    Timer(const Duration(milliseconds: 1800), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const HomeScreen(),
-          ),
-        );
-      }
+    _fade = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeIn,
+    );
+
+    _scale = Tween<double>(
+      begin: 0.75,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutBack,
+      ),
+    );
+
+    _controller.forward();
+
+    Future.delayed(const Duration(milliseconds: 1900), () {
+      if (!mounted) return;
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => const MainNavigation(),
+        ),
+      );
     });
   }
 
   @override
   void dispose() {
-    animation.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -72,71 +92,52 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF090A18),
-              Color(0xFF301A6B),
-              Color(0xFF090A18),
-            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF111225),
+              Color(0xFF090A0F),
+              Color(0xFF15101F),
+            ],
           ),
         ),
         child: Center(
-          child: ScaleTransition(
-            scale: CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutBack,
-            ),
-            child: FadeTransition(
-              opacity: animation,
+          child: FadeTransition(
+            opacity: _fade,
+            child: ScaleTransition(
+              scale: _scale,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF5B5FFF),
-                          Color(0xFFB34DFF),
-                          Color(0xFFFF4FA3),
-                        ],
-                      ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x665B5FFF),
-                          blurRadius: 35,
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'W',
-                        style: TextStyle(
-                          fontSize: 58,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  const Text(
-                    'WHAT NOW AI',
-                    style: TextStyle(
-                      fontSize: 27,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+                children: const [
+                  Logo(size: 86),
+                  SizedBox(height: 24),
                   Text(
-                    'From confusion → clear action',
+                    'WHAT NOW',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(.65),
+                      fontSize: 30,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 4,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'AI',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 6,
+                    ),
+                  ),
+                  SizedBox(height: 22),
+                  Text(
+                    'Send anything. Get clear actions.',
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 14,
                     ),
                   ),
                 ],
@@ -149,7 +150,67 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-// ================= HOME =================
+// ============================================================
+// MAIN NAVIGATION
+// ============================================================
+
+class MainNavigation extends StatefulWidget {
+  const MainNavigation({super.key});
+
+  @override
+  State<MainNavigation> createState() => _MainNavigationState();
+}
+
+class _MainNavigationState extends State<MainNavigation> {
+  int _index = 0;
+
+  final List<Widget> _pages = const [
+    HomeScreen(),
+    HistoryScreen(),
+    SettingsScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _index,
+        children: _pages,
+      ),
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: const Color(0xFF101116),
+        indicatorColor: const Color(0xFF29213F),
+        selectedIndex: _index,
+        onDestinationSelected: (value) {
+          setState(() {
+            _index = value;
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.history),
+            selectedIcon: Icon(Icons.history_toggle_off),
+            label: 'History',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================
+// HOME
+// ============================================================
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -159,249 +220,275 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int page = 0;
+  final TextEditingController _controller = TextEditingController();
 
-  final TextEditingController controller = TextEditingController();
+  Future<void> pasteText() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
 
-  void analyze(String text) {
-    if (text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Type or paste something first.'),
+    if (!mounted) return;
+
+    if (data != null && data.text != null && data.text!.trim().isNotEmpty) {
+      setState(() {
+        _controller.text = data.text!;
+      });
+
+      showMessage('Text pasted successfully.');
+    } else {
+      showMessage('Nothing found in clipboard.');
+    }
+  }
+
+  void showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
         ),
       );
+  }
+
+  void openAnalysis() {
+    final text = _controller.text.trim();
+
+    if (text.isEmpty) {
+      showMessage('Paste or type something first.');
       return;
     }
 
-    Navigator.push(
-      context,
+    Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => AnalysisScreen(
-          input: text.trim(),
-        ),
+        builder: (_) => AnalysisScreen(input: text),
       ),
     );
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (page == 1) {
-      return const HistoryScreen();
-    }
-
-    if (page == 2) {
-      return const SettingsScreen();
-    }
-
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Logo(size: 48),
+                  const Logo(size: 46),
                   const SizedBox(width: 12),
-                  const Text(
-                    'WHAT NOW',
-                    style: TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w900,
+                  const Expanded(
+                    child: Text(
+                      'WHAT NOW AI',
+                      style: TextStyle(
+                        fontSize: 21,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
+                      ),
                     ),
                   ),
-                  const Spacer(),
                   IconButton(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Icons.notifications_none_rounded,
-                    ),
+                    onPressed: () {
+                      showMessage('Notifications coming soon.');
+                    },
+                    icon: const Icon(Icons.notifications_none),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 35),
+              const SizedBox(height: 38),
 
               const Text(
-                'What should I\ndo next?',
+                'Anything confusing?',
                 style: TextStyle(
-                  fontSize: 39,
-                  height: 1.05,
+                  fontSize: 31,
                   fontWeight: FontWeight.w900,
+                  height: 1.1,
                 ),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 8),
 
-              Text(
-                'Send anything confusing.\n'
-                'I’ll turn it into clear actions.',
+              const Text(
+                'Send it to WHAT NOW.',
                 style: TextStyle(
-                  fontSize: 16,
-                  height: 1.5,
-                  color: Colors.white.withOpacity(.62),
+                  fontSize: 20,
+                  color: Colors.white60,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
 
               const SizedBox(height: 28),
 
               Container(
-                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(.055),
-                  borderRadius: BorderRadius.circular(26),
+                  color: const Color(0xFF12141C),
+                  borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: Colors.white.withOpacity(.09),
+                    color: Colors.white10,
                   ),
                 ),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: controller,
-                      maxLines: 5,
-                      decoration: InputDecoration(
-                        hintText:
-                            'Paste a message, bill, offer, problem...',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(.35),
+                child: TextField(
+                  controller: _controller,
+                  minLines: 7,
+                  maxLines: 10,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText:
+                        'Paste a message, bill, email, offer, warning or anything you do not understand...',
+                    hintStyle: TextStyle(
+                      color: Colors.white38,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.all(20),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: ActionButton(
+                      icon: Icons.content_paste,
+                      label: 'Paste',
+                      onTap: pasteText,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ActionButton(
+                      icon: Icons.photo_outlined,
+                      label: 'Photo',
+                      onTap: () {
+                        showMessage('Photo input coming next.');
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ActionButton(
+                      icon: Icons.attach_file,
+                      label: 'File',
+                      onTap: () {
+                        showMessage('File input coming next.');
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 18),
+
+              SizedBox(
+                width: double.infinity,
+                height: 58,
+                child: ElevatedButton(
+                  onPressed: openAnalysis,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF7C5CFF),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'WHAT NOW?',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1,
                         ),
-                        border: InputBorder.none,
                       ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    Row(
-                      children: [
-                        ActionButton(
-                          icon: Icons.content_paste_rounded,
-                          title: 'Paste',
-                          onTap: () async {
-                            final data = await Clipboard.getData(
-                              Clipboard.kTextPlain,
-                            );
-
-                            if (data?.text != null) {
-                              controller.text = data!.text!;
-                            }
-                          },
-                        ),
-                        ActionButton(
-                          icon: Icons.camera_alt_outlined,
-                          title: 'Photo',
-                          onTap: () {
-                            showMessage(context, 'Photo feature coming next.');
-                          },
-                        ),
-                        ActionButton(
-                          icon: Icons.attach_file_rounded,
-                          title: 'File',
-                          onTap: () {
-                            showMessage(context, 'File feature coming next.');
-                          },
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    GradientButton(
-                      title: 'WHAT NOW?',
-                      icon: Icons.auto_awesome_rounded,
-                      onTap: () => analyze(controller.text),
-                    ),
-                  ],
+                      SizedBox(width: 10),
+                      Icon(Icons.arrow_forward_rounded),
+                    ],
+                  ),
                 ),
               ),
 
               const SizedBox(height: 32),
 
-              Text(
-                'TRY AN EXAMPLE',
+              const Text(
+                'TRY IT WITH',
                 style: TextStyle(
                   fontSize: 12,
-                  letterSpacing: 1.5,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white.withOpacity(.45),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.8,
+                  color: Colors.white38,
                 ),
               ),
 
               const SizedBox(height: 14),
 
               ExampleCard(
-                icon: Icons.work_outline_rounded,
-                title: 'Job offer',
-                subtitle: 'Is this offer safe?',
-                onTap: () => analyze(
-                  'I received a job offer for ₹35,000 salary. '
-                  'They are asking me to pay a training fee before joining.',
-                ),
+                icon: Icons.receipt_long_outlined,
+                title: 'A bill or payment message',
+                subtitle: '“Do I need to pay this?”',
+                onTap: () {
+                  _controller.text =
+                      'Your payment of ₹4,999 is due by 25 September. Late payment may attract additional charges.';
+                },
               ),
 
               ExampleCard(
-                icon: Icons.warning_amber_rounded,
-                title: 'Suspicious message',
-                subtitle: 'Is this message risky?',
-                onTap: () => analyze(
-                  'Your electricity bill is overdue. '
-                  'Pay immediately using this link or your connection '
-                  'will be disconnected today.',
-                ),
+                icon: Icons.work_outline,
+                title: 'A job offer',
+                subtitle: '“Is this offer safe?”',
+                onTap: () {
+                  _controller.text =
+                      'Congratulations! You have been selected for a work-from-home job. Pay ₹2,000 registration fee to start.';
+                },
               ),
 
               ExampleCard(
-                icon: Icons.shopping_bag_outlined,
-                title: 'Online purchase',
-                subtitle: 'Should I buy it?',
-                onTap: () => analyze(
-                  'This phone costs ₹49,999. '
-                  'It has a one year warranty and seven day replacement.',
+                icon: Icons.link,
+                title: 'A suspicious message',
+                subtitle: '“What should I do?”',
+                onTap: () {
+                  _controller.text =
+                      'Your account will be blocked today. Click this link immediately and verify your details.';
+                },
+              ),
+
+              const SizedBox(height: 20),
+
+              const Center(
+                child: Text(
+                  'Your information stays in your control.',
+                  style: TextStyle(
+                    color: Colors.white30,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
-
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: page,
-        onDestinationSelected: (value) {
-          setState(() {
-            page = value;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history_rounded),
-            label: 'History',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings_rounded),
-            label: 'Settings',
-          ),
-        ],
-      ),
     );
   }
 }
 
-// ================= ANALYSIS =================
+// ============================================================
+// ANALYSIS SCREEN
+// ============================================================
 
-class AnalysisScreen extends StatefulWidget {
+class AnalysisScreen extends StatelessWidget {
   final String input;
 
   const AnalysisScreen({
@@ -410,37 +497,94 @@ class AnalysisScreen extends StatefulWidget {
   });
 
   @override
-  State<AnalysisScreen> createState() => _AnalysisScreenState();
-}
-
-class _AnalysisScreenState extends State<AnalysisScreen> {
-  bool expanded = false;
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'WHAT NOW AI',
-          style: TextStyle(fontWeight: FontWeight.w800),
+          'WHAT NOW?',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1,
+          ),
         ),
+        backgroundColor: Colors.transparent,
       ),
-
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 35),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text(
+              'Here is what matters.',
+              style: TextStyle(
+                fontSize: 27,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              input,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white45,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            const InfoCard(
+              icon: Icons.info_outline,
+              title: 'WHAT IS THIS?',
+              text:
+                  'This appears to be a message or document that requires your attention.',
+            ),
+
+            const SizedBox(height: 12),
+
+            const Row(
+              children: [
+                Expanded(
+                  child: SmallInfoCard(
+                    title: 'URGENCY',
+                    value: 'Medium',
+                    icon: Icons.bolt,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: SmallInfoCard(
+                    title: 'RISK',
+                    value: 'Check',
+                    icon: Icons.shield_outlined,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            const InfoCard(
+              icon: Icons.event_outlined,
+              title: 'DEADLINE',
+              text:
+                  'Check the original message carefully for an exact date or time.',
+            ),
+
+            const SizedBox(height: 12),
+
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(22),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF292B75),
-                    Color(0xFF642B76),
-                  ],
+                color: const Color(0xFF171421),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: const Color(0xFF7C5CFF).withOpacity(0.35),
                 ),
               ),
               child: const Column(
@@ -448,223 +592,106 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.auto_awesome_rounded),
-                      SizedBox(width: 8),
+                      Icon(
+                        Icons.play_arrow_rounded,
+                        color: Color(0xFF9B82FF),
+                      ),
+                      SizedBox(width: 10),
                       Text(
-                        'AI ANALYSIS',
+                        'WHAT SHOULD I DO NOW?',
                         style: TextStyle(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
-                  Text(
-                    'Here’s what matters.',
-                    style: TextStyle(
-                      fontSize: 27,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  SizedBox(height: 16),
+                  StepRow(
+                    number: '1',
+                    text: 'Verify the sender and important details.',
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Information converted into simple next steps.',
+                  StepRow(
+                    number: '2',
+                    text: 'Check the deadline before taking action.',
+                  ),
+                  StepRow(
+                    number: '3',
+                    text: 'Do not pay or share sensitive information until verified.',
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
 
-            InfoCard(
-              icon: Icons.lightbulb_outline_rounded,
-              title: 'WHAT IS THIS?',
-              text:
-                  'This looks like information that needs your attention. '
-                  'Check the source, terms, deadline and requested action.',
+            const IgnoreCard(),
+
+            const SizedBox(height: 14),
+
+            const Text(
+              'NEXT 3 STEPS',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.7,
+                color: Colors.white38,
+              ),
             ),
 
-            InfoCard(
-              icon: Icons.priority_high_rounded,
-              title: 'URGENCY',
-              badge: 'CHECK SOON',
-              text:
-                  'Check whether there is a real deadline before taking action.',
+            const SizedBox(height: 12),
+
+            const NumberedCard(
+              number: '01',
+              title: 'Verify',
+              text: 'Confirm that the information is genuine.',
             ),
 
-            InfoCard(
-              icon: Icons.shield_outlined,
-              title: 'RISK',
-              badge: 'MEDIUM',
-              text:
-                  'Be careful with unexpected links, payments or requests '
-                  'for personal information.',
+            const NumberedCard(
+              number: '02',
+              title: 'Decide',
+              text: 'Compare the deadline, cost and possible risk.',
             ),
 
-            InfoCard(
-              icon: Icons.calendar_today_outlined,
-              title: 'DEADLINE',
-              text:
-                  'No reliable deadline was detected. Check the original '
-                  'message or document for an exact date.',
+            const NumberedCard(
+              number: '03',
+              title: 'Act',
+              text: 'Take the appropriate next step only after checking.',
             ),
 
-            InfoCard(
-              icon: Icons.check_circle_outline_rounded,
-              title: 'WHAT TO DO NOW',
-              text:
-                  'Pause → verify the source → check the deadline → '
-                  'take the safest next action.',
-            ),
+            const SizedBox(height: 12),
 
-            const SizedBox(height: 5),
-
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  expanded = !expanded;
-                });
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF151626),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: const Color(0x665B5FFF),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.help_outline_rounded),
-                        const SizedBox(width: 10),
-                        const Expanded(
-                          child: Text(
-                            'WHAT IF I DO NOTHING?',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        Icon(
-                          expanded
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                        ),
-                      ],
-                    ),
-
-                    if (expanded) ...[
-                      const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF12141A),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.edit_outlined),
+                      SizedBox(width: 10),
                       Text(
-                        'You could miss an important deadline or allow '
-                        'a possible risk to continue. Verify important '
-                        'information before acting.',
+                        'DRAFT REPLY',
                         style: TextStyle(
-                          height: 1.5,
-                          color: Colors.white.withOpacity(.65),
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ],
-                  ],
-                ),
+                  ),
+                  SizedBox(height: 14),
+                  Text(
+                    '“Thanks for the information. I will verify the details and get back to you shortly.”',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
               ),
             ),
-
-            const SizedBox(height: 15),
-
-            const InfoCard(
-              icon: Icons.format_list_numbered_rounded,
-              title: 'NEXT 3 STEPS',
-              text:
-                  '1. Verify the source.\n'
-                  '2. Check the exact deadline and terms.\n'
-                  '3. Take the safest action and keep a record.',
-            ),
-
-            const InfoCard(
-              icon: Icons.reply_rounded,
-              title: 'DRAFT REPLY',
-              text:
-                  '“Thanks. Before I proceed, please confirm the official '
-                  'details, deadline and any payment requirements.”',
-            ),
-
-            const SizedBox(height: 10),
-
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      showMessage(
-                        context,
-                        'Reminder feature coming next.',
-                      );
-                    },
-                    icon: const Icon(Icons.alarm_outlined),
-                    label: const Text('Remind me'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      showMessage(
-                        context,
-                        'Share feature coming next.',
-                      );
-                    },
-                    icon: const Icon(Icons.share_outlined),
-                    label: const Text('Share'),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            Center(
-              child: Text(
-                'Demo analysis • Verify important information.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withOpacity(.35),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ================= HISTORY =================
-
-class HistoryScreen extends StatelessWidget {
-  const HistoryScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'History',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: const [
-          HistoryItem(
-            icon: Icons.work_outline,
-            title: 'Job offer',
-            subtitle: 'Training fee • Medium risk',
-          ),
-          HistoryItem(
-            icon: Icons.warning_amber_rounded,
-  
+            
