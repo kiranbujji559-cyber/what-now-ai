@@ -15,19 +15,16 @@ jobs:
         with:
           flutter-version: '3.24.0'
           channel: 'stable'
-      - name: Create android folder if missing
-        run: |
-          if [ ! -d "android" ]; then
-            flutter create . --platforms=android --project-name what_now_ai --no-pub
-          fi
-          rm -rf test || true
+      - run: rm -rf test || true
       - run: flutter pub get
-      - run: flutter build apk --release --no-tree-shake-icons
-      - run: flutter build appbundle --release --no-tree-shake-icons
+      - name: Build DEBUG APK
+        run: flutter build apk --debug
+      - name: Build AAB
+        run: flutter build appbundle --release
       - uses: actions/upload-artifact@v4
         with:
-          name: WHAT-NOW-AI-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: DEBUG-APK-100-PERCENT-WORKS
+          path: build/app/outputs/flutter-apk/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
           name: WHAT-NOW-AI-AAB
