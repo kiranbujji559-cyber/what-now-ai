@@ -13,10 +13,12 @@ jobs:
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.3'
+          flutter-version: '3.24.5'
+          channel: 'stable'
       - run: flutter pub get
-      - run: flutter build apk --release --no-shrink
-      - uses: actions/upload-artifact@v4
+      - run: flutter build apk --release --target-platform android-arm64
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
-          name: FINAL-APK-DIRECT
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: WHATNOW-RELEASE-FINAL
+          path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
