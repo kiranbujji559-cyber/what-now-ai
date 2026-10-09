@@ -13,13 +13,10 @@ jobs:
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
-      - run: rm -rf test
+          flutter-version: '3.22.3'
       - run: flutter pub get
-      - name: Fix package name
-        run: sed -i 's/com.example.what_now_ai/com.kiran.whatnowaifinal/g' android/app/build.gradle
-      - run: flutter build apk --release --target-platform android-arm64
+      - run: flutter build apk --release --no-shrink
       - uses: actions/upload-artifact@v4
         with:
-          name: FINAL-APK-DIRECT-INSTALL
+          name: FINAL-APK-DIRECT
           path: build/app/outputs/flutter-apk/app-release.apk
