@@ -1,4 +1,4 @@
-name: FINAL RELEASE NO ZIP
+name: DEBUG FINAL
 on:
   push:
     branches: [ main ]
@@ -13,12 +13,11 @@ jobs:
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
+          flutter-version: '3.22.3'
           channel: 'stable'
       - run: flutter pub get
-      - run: flutter build apk --release --target-platform android-arm64
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - run: flutter build apk --debug --split-per-abi
+      - uses: actions/upload-artifact@v4
         with:
-          name: WHATNOW-RELEASE-FINAL
-          path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          name: WHATNOW-FINAL-30MB
+          path: build/app/outputs/flutter-apk/app-arm64-v8a-debug.apk
