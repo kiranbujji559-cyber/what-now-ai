@@ -19,27 +19,27 @@ jobs:
         with:
           flutter-version: '3.22.3'
           channel: 'stable'
-      
-      - name: Create android folder if missing
+
+      - name: Fix package name and android folder
         run: |
-          if [ ! -d "android" ]; then
-            flutter create . --platforms=android
-          else
-            # Old gradle fix - recreate android to make it compatible
-            rm -rf android
-            flutter create . --org com.whatnowai.app --platforms=android --project-name what_now_ai
-          fi
+          # 1. Fix pubspec.yaml name - hyphen to underscore
+          sed -i 's/name: what-now-ai/name: what_now_ai/g' pubspec.yaml
+          sed -i 's/name: what_now_ai/name: what_now_ai/g' pubspec.yaml
+          cat pubspec.yaml | grep "^name:"
+          # 2. Recreate android folder fresh
+          rm -rf android
+          flutter create . --platforms=android --org com.whatnowai --project-name what_now_ai
           
       - name: Run flutter pub get
         run: flutter pub get
         
-      - name: Build DEBUG APK - easy install
+      - name: Build DEBUG APK
         run: flutter build apk --debug
         
       - name: Build RELEASE APK
         run: flutter build apk --release
         
-      - name: Build AAB for Play Store
+      - name: Build AAB
         run: flutter build appbundle --release
         
       - uses: actions/upload-artifact@v4
