@@ -1,14 +1,15 @@
 name: what_now_ai
-description: WHAT NOW AI - Turn confusion into clear actions
+description: WHAT NOW AI - Send anything. Get clear actions.
 publish_to: 'none'
 version: 1.0.0+1
-
 environment:
   sdk: ">=3.0.0 <4.0.0"
-
 dependencies:
   flutter:
     sdk: flutter
-
+  image_picker: ^1.0.7
+  file_picker: ^8.0.0
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon.png
