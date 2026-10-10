@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'dart:math' as math;
 
 void main() => runApp(const WhatNowAIApp());
 
@@ -9,337 +9,185 @@ class WhatNowAIApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF050A1F),
-        useMaterial3: true,
-      ),
-      home: const MainScreen(),
+      theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: const Color(0xFF080C1F)),
+      home: const SplashScreen(),
     );
   }
 }
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+// SPLASH WITH 3D GLOW ANIMATION
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late AnimationController _floatController;
+  late Animation<double> _pulse;
+  late Animation<double> _float;
 
-class _MainScreenState extends State<MainScreen> {
-  int _index = 0;
-  final pages = const [HomeScreen(), HistoryScreen(), SettingsScreen()];
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))..repeat(reverse: true);
+    _floatController = AnimationController(vsync: this, duration: const Duration(milliseconds: 3000))..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 0.9, end: 1.1).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
+    _float = Tween<double>(begin: -10, end: 10).animate(CurvedAnimation(parent: _floatController, curve: Curves.easeInOut));
+    Future.delayed(const Duration(seconds: 3), () {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainNav()));
+    });
+  }
+  @override
+  void dispose() { _pulseController.dispose(); _floatController.dispose(); super.dispose(); }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: RadialGradient(
-            center: Alignment.topCenter, radius: 1.2,
-            colors: [Color(0xFF1A237E), Color(0xFF050A1F)],
+            center: Alignment.center, radius: 1.2,
+            colors: [Color(0xFF1A1F4D), Color(0xFF080C1F)],
           ),
         ),
-        child: pages[_index],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F1433),
-          boxShadow: [BoxShadow(color: const Color(0xFF8B5CF6).withOpacity(0.3), blurRadius: 20)],
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          selectedItemColor: const Color(0xFF00E5FF),
-          unselectedItemColor: Colors.white38,
-          currentIndex: _index,
-          onTap: (i) => setState(() => _index = i),
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: 'History'),
-            BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: 'Settings'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
-  final _ctrl = TextEditingController();
-  late AnimationController _pulse;
-  late Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulse = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
-    _scale = Tween<double>(begin: 1, end: 1.15).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose(){ _pulse.dispose(); _ctrl.dispose(); super.dispose(); }
-
-  void _analyze(){
-    if(_ctrl.text.trim().isEmpty) return;
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ResultScreen(text: _ctrl.text)));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            // TOP LOGO WITH 3D GLOW
-            Row(
-              children: [
-                ScaleTransition(
-                  scale: _scale,
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFF00D4FF), Color(0xFF8B5CF6), Color(0xFFFF00FF)]),
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(color: const Color(0xFF00D4FF).withOpacity(0.6), blurRadius: 20, spreadRadius: 2),
-                        BoxShadow(color: const Color(0xFFFF00FF).withOpacity(0.4), blurRadius: 30, spreadRadius: 1),
-                      ],
-                    ),
-                    child: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 28),
-                  ),
+            // Neon wave bottom
+            Positioned(bottom: -50, left: -50, right: -50, child: _neonWave()),
+            Center(
+              child: AnimatedBuilder(
+                animation: Listenable.merge([_pulse, _float]),
+                builder: (c, child) => Transform.translate(
+                  offset: Offset(0, _float.value),
+                  child: Transform.scale(scale: _pulse.value, child: child),
                 ),
-                const SizedBox(width: 12),
-                const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('WHAT NOW AI', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, letterSpacing: 1, shadows: [Shadow(color: Colors.blue, blurRadius: 10)])),
-                  Text('Send anything. Get clear actions.', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  _glowingLogo(120),
+                  const SizedBox(height: 20),
+                  ShaderMask(
+                    shaderCallback: (b) => const LinearGradient(colors: [Colors.white, Color(0xFF8A5CFF), Color(0xFF00E5FF)]).createShader(b),
+                    child: const Text("WHAT NOW AI", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1)),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text("Send anything.\nGet clear actions.", textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  const SizedBox(height: 40),
+                  _featureIcons(),
                 ]),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Align(alignment: Alignment.centerRight, child: Text('Less Confusion.\nMore Action.', style: TextStyle(color: Colors.pinkAccent.shade100, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic, shadows: const [Shadow(color: Colors.pink, blurRadius: 10)]), textAlign: TextAlign.right)),
-
-            const SizedBox(height: 18),
-            // TOP ICONS ROW
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _topIcon(Icons.message_rounded, 'Messages\n(WhatsApp, SMS, etc.)', Colors.green),
-                _topIcon(Icons.image_rounded, 'Screenshots\n(Images & Photos)', Colors.purple),
-                _topIcon(Icons.description_rounded, 'Documents\n(PDF, Bills, etc.)', Colors.blue),
-                _topIcon(Icons.link_rounded, 'Links\n(Websites, Offers, etc.)', Colors.orange),
-                _topIcon(Icons.mic_rounded, 'Voice\n(Future Update)', Colors.pink),
-              ],
-            ),
-            const SizedBox(height: 22),
-            const Text('Anything confusing?', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
-            const Text('Send it to WHAT NOW.', style: TextStyle(color: Colors.white70, fontSize: 14)),
-            const SizedBox(height: 14),
-
-            // INPUT BOX WITH NEON BORDER
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                gradient: const LinearGradient(colors: [Color(0xFF00D4FF), Color(0xFF8B5CF6)]),
-                boxShadow: [BoxShadow(color: const Color(0xFF8B5CF6).withOpacity(0.4), blurRadius: 15)],
-              ),
-              padding: const EdgeInsets.all(1.5),
-              child: Container(
-                decoration: BoxDecoration(color: const Color(0xFF121836), borderRadius: BorderRadius.circular(16)),
-                child: TextField(
-                  controller: _ctrl,
-                  maxLines: 4,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    hintText: 'Paste a message, bill, offer, email or anything...',
-                    hintStyle: TextStyle(color: Colors.white38, fontSize: 13),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(16),
-                  ),
-                ),
               ),
             ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _actionChip(Icons.content_paste_rounded, 'Paste'),
-                _actionChip(Icons.photo_rounded, 'Photo'),
-                _actionChip(Icons.file_present_rounded, 'File'),
-                _actionChip(Icons.link_rounded, 'Link'),
-                _actionChip(Icons.mic_rounded, 'Voice'),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // MAIN BUTTON WITH ANIMATED GLOW
-            Container(
-              width: double.infinity, height: 56,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)]),
-                boxShadow: [BoxShadow(color: const Color(0xFF8B5CF6).withOpacity(0.6), blurRadius: 20, offset: const Offset(0, 4))],
-              ),
-              child: ElevatedButton.icon(
-                onPressed: _analyze,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                icon: const Icon(Icons.auto_awesome, color: Colors.white),
-                label: const Text('WHAT SHOULD I DO?', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.white, letterSpacing: 1)),
-              ),
-            ),
-            const SizedBox(height: 22),
-            const Text('Try an example', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white70)),
-            const SizedBox(height: 10),
-            _example(Icons.warning_amber_rounded, const Color(0xFFEF4444), 'Suspicious message', 'Your account will be blocked today...', 'Your account will be blocked today. Click here to verify.'),
-            _example(Icons.receipt_long_rounded, const Color(0xFF22C55E), 'Bill or payment', 'Electricity bill for tomorrow...', 'Your electricity bill of ₹2,450 is due tomorrow. Pay immediately to avoid disconnection.'),
-            _example(Icons.work_rounded, const Color(0xFF8B5CF6), 'Job offer', 'You have been selected for a job...', 'Dear Customer, Your application is ready for the next step. A few documents are still required.'),
-            _example(Icons.description_rounded, const Color(0xFF3B82F6), 'Agreement', 'Please review the document...', 'Please review the rental agreement document attached.'),
-            _example(Icons.shopping_bag_rounded, const Color(0xFFF59E0B), 'Product', 'Best deal on this product...', 'Best deal on this product - 50% off today only!'),
           ],
         ),
       ),
     );
   }
 
-  Widget _topIcon(IconData icon, String label, Color c){
-    return Column(children: [
-      Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: c.withOpacity(0.2), shape: BoxShape.circle, border: Border.all(color: c.withOpacity(0.5)), boxShadow: [BoxShadow(color: c.withOpacity(0.4), blurRadius: 12)]),
-        child: Icon(icon, color: c, size: 18),
-      ),
-      const SizedBox(height: 4),
-      Text(label, style: const TextStyle(fontSize: 7, color: Colors.white60), textAlign: TextAlign.center),
-    ]);
-  }
-
-  Widget _actionChip(IconData icon, String label){
+  Widget _glowingLogo(double size) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      width: size, height: size,
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2040),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 6)],
+        borderRadius: BorderRadius.circular(28),
+        gradient: const LinearGradient(colors: [Color(0xFF00E5FF), Color(0xFF8A5CFF), Color(0xFFFF3CAC)]),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFF00E5FF).withOpacity(0.6), blurRadius: 30, spreadRadius: 2),
+          BoxShadow(color: const Color(0xFF8A5CFF).withOpacity(0.6), blurRadius: 40, spreadRadius: 2),
+        ],
       ),
-      child: Column(children: [Icon(icon, size: 18, color: Colors.white70), const SizedBox(height: 2), Text(label, style: const TextStyle(fontSize: 9, color: Colors.white70))]),
-    );
-  }
-
-  Widget _example(IconData icon, Color color, String title, String sub, String fill){
-    return InkWell(
-      onTap: ()=> setState(()=> _ctrl.text = fill),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFF121836),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withOpacity(0.06)),
-          boxShadow: [BoxShadow(color: color.withOpacity(0.15), blurRadius: 12)],
-        ),
-        child: Row(children: [
-          Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: color, size: 20)),
-          const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-            Text(sub, style: const TextStyle(color: Colors.white54, fontSize: 11), overflow: TextOverflow.ellipsis),
-          ])),
-          const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.white24),
-        ]),
+        margin: const EdgeInsets.all(3),
+        decoration: BoxDecoration(color: const Color(0xFF0A0F2A), borderRadius: BorderRadius.circular(25)),
+        child: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 50),
       ),
     );
   }
+
+  Widget _featureIcons() => Wrap(spacing: 12, runSpacing: 12, alignment: WrapAlignment.center, children: [
+    _miniIcon(Icons.message, const Color(0xFF00D283)), _miniIcon(Icons.image, const Color(0xFF8A5CFF)),
+    _miniIcon(Icons.description, const Color(0xFFFF5A5A)), _miniIcon(Icons.link, const Color(0xFF00BFFF)),
+    _miniIcon(Icons.mic, const Color(0xFFFF3CAC)),
+  ]);
+  Widget _miniIcon(IconData i, Color c) => Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(14), boxShadow: [BoxShadow(color: c.withOpacity(0.5), blurRadius: 15)]), child: Icon(i, color: Colors.white, size: 22));
+  Widget _neonWave() => Container(height: 200, decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [const Color(0xFF00E5FF).withOpacity(0.0), const Color(0xFF8A5CFF).withOpacity(0.4), const Color(0xFF00E5FF).withOpacity(0.3)]), borderRadius: const BorderRadius.vertical(top: Radius.circular(100))));
 }
 
-class ResultScreen extends StatelessWidget {
-  final String text;
-  const ResultScreen({super.key, required this.text});
-  @override
-  Widget build(BuildContext context) {
-    final isBill = text.toLowerCase().contains('bill') || text.toLowerCase().contains('₹2,450');
-    final isScam = text.toLowerCase().contains('blocked');
-    return Scaffold(
-      appBar: AppBar(title: const Text('WHAT NOW AI', style: TextStyle(fontWeight: FontWeight.w900)), backgroundColor: const Color(0xFF0F1433), centerTitle: true),
-      body: Container(
-        decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF0F1433), Color(0xFF050A1F)])),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(children: [
-            Container(padding: const EdgeInsets.all(2), decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), gradient: const LinearGradient(colors: [Colors.cyan, Colors.purple])), child: Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: const Color(0xFF121836), borderRadius: BorderRadius.circular(12)), child: Text(text, style: const TextStyle(color: Colors.white70)))),
-            const SizedBox(height: 16),
-            Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6), decoration: BoxDecoration(color: const Color(0xFF8B5CF6).withOpacity(0.15), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.3))), child: const Text('✦ HERE\'S WHAT NOW ✦', style: TextStyle(color: Color(0xFF8B5CF6), fontWeight: FontWeight.w900, fontSize: 12))),
-            const SizedBox(height: 14),
-            _neonCard(Icons.info_outline_rounded, 'WHAT IS THIS?', isBill ? 'Electricity bill payment reminder.' : isScam ? 'Suspicious account blocked message' : 'General Message', const Color(0xFF8B5CF6)),
-            _neonCard(Icons.bolt_rounded, 'WHY IT MATTERS?', isBill ? 'Avoid late fee and service disruption.' : 'May be important or risky', const Color(0xFF3B82F6)),
-            _neonCard(Icons.check_circle_rounded, 'WHAT SHOULD I DO?', isBill ? 'Verify with official provider app/website and pay if genuine.' : 'Verify sender and official source', const Color(0xFF22C55E)),
-            _neonCard(Icons.calendar_today_rounded, 'DEADLINE', isBill ? 'Tomorrow' : 'Check source carefully', const Color(0xFFF59E0B)),
-            _neonCard(Icons.warning_rounded, 'WHAT IF I DO NOTHING?', isBill ? 'Late fee, disconnection possible.' : 'You may miss important info', const Color(0xFFEF4444)),
-            _neonCard(Icons.shield_rounded, 'RISK CHECK', isScam ? 'High risk - Fake link!' : 'Low risk - Check source carefully', const Color(0xFFEC4899)),
-            const SizedBox(height: 12),
-            const Align(alignment: Alignment.centerLeft, child: Text('NEXT 3 STEPS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1))),
-            const SizedBox(height: 8),
-            Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: const Color(0xFF121836), borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.white12)), child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('1  Verify bill details on official app/website.', style: TextStyle(fontSize: 13)), SizedBox(height: 4), Text('2  Check payment amount and due date.', style: TextStyle(fontSize: 13)), SizedBox(height: 4), Text('3  Complete payment if genuine.', style: TextStyle(fontSize: 13))]) ),
-            const SizedBox(height: 16),
-            Row(children: [
-              Expanded(child: Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), gradient: const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)]), boxShadow: [BoxShadow(color: const Color(0xFF8B5CF6).withOpacity(0.4), blurRadius: 12)]), child: ElevatedButton.icon(onPressed: (){ Clipboard.setData(ClipboardData(text: 'Thanks, please share official link')); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied!'))); }, style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))), icon: const Icon(Icons.copy_rounded, size: 18), label: const Text('Copy Reply')))),
-              const SizedBox(width: 10),
-              Expanded(child: Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), gradient: const LinearGradient(colors: [Color(0xFF0EA5E9), Color(0xFF2563EB)]), boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.4), blurRadius: 12)]), child: ElevatedButton.icon(onPressed: (){}, style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))), icon: const Icon(Icons.alarm_rounded, size: 18), label: const Text('Set Reminder')))),
-            ])
-          ]),
-        ),
-      ),
-    );
-  }
-  Widget _neonCard(IconData icon, String title, String desc, Color color){
+// MAIN NAVIGATION
+class MainNav extends StatefulWidget { const MainNav({super.key}); @override State<MainNav> createState() => _MainNavState(); }
+class _MainNavState extends State<MainNav> { int idx = 0; final pages = [const HomePage(), const HistoryPage(), const SettingsPage()]; @override Widget build(BuildContext context) { return Scaffold(body: pages[idx], bottomNavigationBar: _bottomBar()); }
+  Widget _bottomBar() => Container(decoration: const BoxDecoration(color: Color(0xFF0F1230), border: Border(top: BorderSide(color: Colors.white12))), child: BottomNavigationBar(currentIndex: idx, onTap: (i)=>setState(()=>idx=i), backgroundColor: Colors.transparent, selectedItemColor: const Color(0xFF8A5CFF), unselectedItemColor: Colors.white54, type: BottomNavigationBarType.fixed, items: const [BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: "Home"), BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: "History"), BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: "Settings")]));
+}
+
+// HOME PAGE - EXACT LIKE IMAGE 1
+class HomePage extends StatefulWidget { const HomePage({super.key}); @override State<HomePage> createState() => _HomePageState(); }
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  late AnimationController _ctrl; late List<Animation<double>> _anims;
+  @override void initState(){ super.initState(); _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200)); _anims = List.generate(6, (i) => Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _ctrl, curve: Interval(i*0.1, 1.0, curve: Curves.elasticOut)))); _ctrl.forward(); }
+  @override Widget build(BuildContext context){
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF121836),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.35)),
-        boxShadow: [BoxShadow(color: color.withOpacity(0.25), blurRadius: 16, spreadRadius: 0)],
-      ),
-      child: Row(children: [
-        Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: color, size: 20)),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.8)),
-          const SizedBox(height: 3),
-          Text(desc, style: const TextStyle(fontSize: 13, color: Colors.white)),
-        ])),
-      ]),
+      decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF0F1440), Color(0xFF080C1F)])),
+      child: SafeArea(child: SingleChildScrollView(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF00E5FF), Color(0xFF8A5CFF)]), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.chat_bubble, size: 20)), const SizedBox(width: 10), const Text("WHAT NOW AI", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16))]),
+        const SizedBox(height: 20),
+        const Text("Anything confusing?", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+        const Text("Send it to WHAT NOW.", style: TextStyle(color: Colors.white60)),
+        const SizedBox(height: 15),
+        _inputBox(),
+        const SizedBox(height: 15),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+          _actionBtn(Icons.content_paste, "Paste"), _actionBtn(Icons.image, "Photo"), _actionBtn(Icons.description, "File"), _actionBtn(Icons.link, "Link"), _actionBtn(Icons.mic, "Voice"),
+        ]),
+        const SizedBox(height: 15),
+        Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 16), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF4A8CFF), Color(0xFF8A5CFF)]), borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: const Color(0xFF8A5CFF).withOpacity(0.5), blurRadius: 20)]), child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.auto_awesome, color: Colors.white), SizedBox(width: 8), Text("WHAT SHOULD I DO?", style: TextStyle(fontWeight: FontWeight.w800))])),
+        const SizedBox(height: 20),
+        const Text("Try an example", style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 10),
+       ...List.generate(5, (i) => _exampleCard(i)),
+      ]))),
     );
+  }
+  Widget _inputBox() => Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.white.withOpacity(0.07), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white12)), child: const TextField(maxLines: 3, decoration: InputDecoration(border: InputBorder.none, hintText: "Paste a message, bill, offer,\nemail or anything...", hintStyle: TextStyle(color: Colors.white38)), style: TextStyle(color: Colors.white)));
+  Widget _actionBtn(IconData ic, String l) => Column(children: [Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(12)), child: Icon(ic, size: 20)), const SizedBox(height: 5), Text(l, style: const TextStyle(fontSize: 11, color: Colors.white60))]);
+  Widget _exampleCard(int i){
+    final data = [
+      [Icons.warning_amber, Colors.red, "Suspicious message", "Your account will be blocked today..."],
+      [Icons.email, Colors.green, "Bill or payment", "Electricity bill due tomorrow..."],
+      [Icons.work, Colors.purple, "Job offer", "You have been selected for a job..."],
+      [Icons.description, Colors.blue, "Agreement", "Please review the document..."],
+      [Icons.local_offer, Colors.orange, "Product", "Best deal on this product..."],
+    ];
+    return ScaleTransition(scale: _anims[i], child: Container(margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white.withOpacity(0.06), borderRadius: BorderRadius.circular(14)), child: Row(children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: data[i][1] as Color, borderRadius: BorderRadius.circular(10)), child: Icon(data[i][0] as IconData, size: 18, color: Colors.white)), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(data[i][2] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)), Text(data[i][3] as String, style: const TextStyle(color: Colors.white54, fontSize: 11))]))])));
   }
 }
 
-class HistoryScreen extends StatelessWidget {
-  const HistoryScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('History', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
-          const SizedBox(height: 12),
-          Container(decoration: BoxDecoration(color: const Color(0xFF121836), borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.white12)), child: const TextField(decoration: InputDecoration(hintText: 'Search your history...', hintStyle: TextStyle(color: Colors.white38), prefixIcon: Icon(Icons.search_rounded, color: Colors.white38), border: InputBorder.none, contentPadding: EdgeInsets.all(14)))),
-          const SizedBox(height: 10),
-          Row(children: [
-            _filter('All', true), const SizedBox(width: 6),
-            _filter('Today', false), const SizedBox(width: 6),
-            _filter('Yesterday', false), const SizedBox(width: 6),
-            _filter('This Week', false),
-          ]),
-          const SizedBox(height: 16),
-          Expanded(child: ListView(children: [
-            _hItem(Icons.receipt_long_rounded, const Color(0xFF22C55E), 'Electricity bill', 'Bill reminder - ₹2,450', 'Today - 10:24 AM'),
-            _hItem(Icons.work_rounded, const Color(0xFF8B5CF6), 'Job offer', 'Suspicious message', 'Today - 09:12 AM'),
-            _hItem(Icons.account_balance_rounded, const Color(0xFF3B82F6), 'Bank alert', 'Transaction declined', 'Today - 08:45 AM'),
-            _hItem(Icons.description_rounded, const Color
+// RESULT PAGE WITH 3D CARDS
+class ResultPage extends StatelessWidget {
+  const ResultPage({super.key});
+  @override Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF0F1440), Color(0xFF080C1F)])),
+      child: SafeArea(child: ListView(padding: const EdgeInsets.all(20), children: [
+        Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.white.withOpacity(0.07), borderRadius: BorderRadius.circular(14)), child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Your electricity bill reminder", style: TextStyle(fontWeight: FontWeight.bold)), SizedBox(height: 5), Text("\"Your electricity bill of ₹2,450 is due tomorrow. Pay immediately to avoid disconnection.\"", style: TextStyle(color: Colors.white60, fontSize: 12)), SizedBox(height: 5), Text("Today, 10:24 AM", style: TextStyle(color: Colors.white38, fontSize: 10))])),
+        const SizedBox(height: 15),
+        const Center(child: Text("✦ HERE'S WHAT NOW ✦", style: TextStyle(color: Color(0xFF8A5CFF), fontWeight: FontWeight.w800, letterSpacing: 1))),
+        const SizedBox(height: 12),
+        _resultCard(Icons.info, "WHAT IS THIS?", "Electricity bill payment reminder.", const Color(0xFF8A5CFF)),
+        _resultCard(Icons.bolt, "WHY IT MATTERS?", "Avoid late fee and service disruption.", const Color(0xFF4A8CFF)),
+        _resultCard(Icons.check_circle, "WHAT SHOULD I DO?", "Verify with official provider app/website and pay if genuine.", const Color(0xFF00D283)),
+        _resultCard(Icons.calendar_today, "DEADLINE", "Tomorrow", const Color(0xFFFF9F43)),
+        _resultCard(Icons.warning, "WHAT IF I DO NOTHING?", "Late fee, disconnection possible.", const Color(0xFFFF5A5A)),
+        _resultCard(Icons.shield, "RISK CHECK", "Be careful of fake links or payment scams.", const Color(0xFFFF3CAC)),
+        const SizedBox(height: 15),
+        const Text("NEXT 3 STEPS", style: TextStyle(fontWeight: FontWeight.w800)),
+        const SizedBox(height: 8),
+        const Text("1 Verify bill details on official app/website.\n2 Check payment amount and due date.\n3 Complete payment if genuine.", style: TextStyle(color: Colors.white70, height: 1.6, fontSize: 13)),
+        const SizedBox(height: 15),
+        Row(children: [Expanded(child: _btn("Copy Reply", Icons.copy, const Color(0xFF8A5CFF))), const SizedBox(width: 10), Expanded(child: _btn("Set Reminder", Icons.alarm, const Color(0xFF4A8CFF)))]),
+      ])),
+    );
+  }
+  static Widget _resultCard(IconData ic, String title, String desc, Color c) => Container(margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: c.withOpacity(0.15), borderRadius: BorderRadius.circular(14), border: Border.all(color: c.withOpacity(0.3))), child: Row(children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(8)), child: Icon(ic, size: 16, color: Colors.white)), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: TextStyle(color: c, fontWeight: FontWeight.w800, fontSize: 11)), const SizedBox(height: 3), Text(desc, style: const TextStyle(color: Colors.white70, fontSize: 12))]))]));
+  static Widget _btn(String t, IconData ic, Color c) => Container(padding: const EdgeInsets.symmetric(vertical: 14), decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(12)), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(ic, size: 16), const SizedBox(width: 6), Text(t, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))]));
+}
+
+class HistoryPage extends StatelessWidget { const HistoryPage({super.key}); @override Widget build(BuildContext context) { return Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF0F1440), Color(0xFF080C1F)])), child: SafeArea(child: ListView(padding: const EdgeInsets.all(20), children: [const Text("History", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)), const SizedBox(height: 10), TextField(decoration: InputDecoration(hintText: "Search your history...", prefixIcon: const Icon(Icons.search), filled: true, fillColor: Colors.white.withOpacity(0.07), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))), const SizedBox(height: 15), Row(children: [ _chip("All", true), _chip("Today", false), _chip("Yesterday", false), _chip("This Week", false)]), const SizedBox(height: 15), _hItem(Icons.receipt, "Electricity bill", "Bill reminder - ₹2,450", Colors.green), _hItem(Icons.work, "Job offer", "Suspicious message", Colors.purple), _hItem(Icons.warning, "Bank alert", "Transaction declined", Colors.blue), _hItem(Icons.description, "Rental agreement", "Document analysis", Colors.orange), _hItem(Icons.flight, "Flight ticket", "Travel details", Colors.blueAccent), _hItem(Icons.shopping_bag, "Product review", "Shopping advice", Colors.pink)]))); } Widget _chip(String t, bool sel) => Container(margin: const EdgeInsets.only(right: 8), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: sel? const Color(0xFF8A5CFF) : Colors.white10, borderRadius: BorderRadius.circular(20)), child: Text(t, style: const TextStyle(fontSize: 12))); Widget _hItem(IconData ic, String title, String sub, Color c) => Container(margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white.withOpacity(0.06), borderRadius: BorderRadius.circular(14)), child: Row(children: [Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(12)), child: Icon(ic, size: 18)), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontWeight: FontWeight.bold)), Text(sub, style: const TextStyle(color: Colors.white54, fontSize: 11))])), const Icon(Icons.chevron_right, color: Colors.white38)])); }
+
+class SettingsPage extends StatelessWidget { const SettingsPage({super.key}); @override Widget build(BuildContext context) { return Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF0F1440), Color(0xFF080C1F)])), child: SafeArea(child: ListView(padding: const EdgeInsets.all(20), children: [const Text("Settings", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)), const SizedBox(height: 15), Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1E2250), Color(0xFF2A2F6B)]), borderRadius: BorderRadius.circular(16)), child: Row(children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF00E5FF), Color(0xFF8A5CFF)]), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.chat_bubble, size: 20)), const SizedBox(width: 10), const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("WHAT NOW AI", style: TextStyle(fontWeight: FontWeight.bold)), Text("v1.0.0", style: TextStyle(color: Colors.white54, fontSize: 11))])])), const SizedBox(height: 20), _sItem(Icons.person, "Account", "Profile & preferences"), _sItem(Icons.notifications, "Notifications", "Reminders & alerts"), _sItem(Icons.language, "Language", "English"), _sItem(Icons.dark_mode, "Appearance", "Dark mode"), _sItem(Icons.security, "Privacy & Security", "Your data is safe"), _sItem(Icons.help, "Help & Support", "FAQs & contact"), const SizedBox(height: 10), Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF8A5CFF), Color(0xFF6A3DFF)]), borderRadius: BorderRadius.circular(14)), child: const Row(children: [Icon(Icons.star, color: Colors.amber), SizedBox(width: 10), Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Go Pro", style: TextStyle(fontWeight: FontWeight.bold)), Text("More analyses, Premium features.", style: TextStyle(fontSize: 11, color: Colors.white70))]), Spacer(), Icon(Icons.chevron_right)]))]))); } Widget _sItem(IconData ic, String t, String sub) => Container(margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.white.withOpacity(0.06), borderRadius: BorderRadius.circular(14)), child: Row(children: [Icon(ic, color: Colors.white70, size: 20), const SizedBox(width: 12), Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(t, style: const TextStyle(fontWeight: FontWeight.w600)), Text(sub, style: const TextStyle(color: Colors.white54, fontSize: 11))]), const Spacer(), const Icon(Icons.chevron_right, color: Colors.
