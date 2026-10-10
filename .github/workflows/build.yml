@@ -1,4 +1,4 @@
-name: WHAT NOW AI Build
+name: WHAT NOW AI Final
 
 on:
   push:
@@ -9,42 +9,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-          
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.3'
           channel: 'stable'
 
-      - name: Fix package name and android folder
+      - name: Fix and Build
         run: |
-          # 1. Fix pubspec.yaml name - hyphen to underscore
           sed -i 's/name: what-now-ai/name: what_now_ai/g' pubspec.yaml
-          sed -i 's/name: what_now_ai/name: what_now_ai/g' pubspec.yaml
-          cat pubspec.yaml | grep "^name:"
-          # 2. Recreate android folder fresh
           rm -rf android
           flutter create . --platforms=android --org com.whatnowai --project-name what_now_ai
-          
-      - name: Run flutter pub get
-        run: flutter pub get
-        
-      - name: Build DEBUG APK
-        run: flutter build apk --debug
-        
-      - name: Build RELEASE APK
-        run: flutter build apk --release
-        
-      - name: Build AAB
-        run: flutter build appbundle --release
-        
+          flutter pub get
+          flutter build apk --debug
+          flutter build apk --release
+
+      - name: Copy APKs to easy location
+        run: |
+          mkdir -p /tmp/my-apks
+          cp build/app/outputs/flutter-apk/app-debug.apk /tmp/my-apks/
+          cp build/app/outputs/flutter-apk/app-release.apk /tmp/my-apks/
+          ls -lh /tmp/my-apks/
+
       - uses: actions/upload-artifact@v4
         with:
-          name: what-now-ai-apks
-          path: |
-            build/app/outputs/flutter-apk/*.apk
-            build/app/outputs/bundle/release/*.aab
+          name: WHAT-NOW-AI-APK-READY
+          path: /tmp/my-apks/*.apk
