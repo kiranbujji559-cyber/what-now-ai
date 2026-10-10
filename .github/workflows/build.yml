@@ -1,9 +1,5 @@
 name: WHAT NOW AI Final
-
-on:
-  push:
-    branches: [ main ]
-
+on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -11,30 +7,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.3'
+          flutter-version: '3.22.0'
           channel: 'stable'
-
-      - name: Fix and Build
-        run: |
-          sed -i 's/name: what-now-ai/name: what_now_ai/g' pubspec.yaml
-          rm -rf android
-          flutter create . --platforms=android --org com.whatnowai --project-name what_now_ai
-          flutter pub get
-          flutter build apk --debug
-          flutter build apk --release
-
-      - name: Copy APKs to easy location
-        run: |
-          mkdir -p /tmp/my-apks
-          cp build/app/outputs/flutter-apk/app-debug.apk /tmp/my-apks/
-          cp build/app/outputs/flutter-apk/app-release.apk /tmp/my-apks/
-          ls -lh /tmp/my-apks/
-
+      - run: flutter pub get
+      - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
-          name: WHAT-NOW-AI-APK-READY
-          path: /tmp/my-apks/*.apk
+          name: what-now-ai-FINAL-3D
+          path: build/app/outputs/flutter-apk/app-release.apk
