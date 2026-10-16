@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "660360420567",
+    "project_id": "studio-6401268288-5a41a",
+    "storage_bucket": "studio-6401268288-5a41a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:660360420567:android:00a98e946a913007c56492",
+        "android_client_info": {
+          "package_name": "com.example.what_now_ai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "660360420567-uc9a1ck2buqgugnlnph0o2sh6tubejhe.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJup2a5qkAMLm4Hj4vak5K4vyay0ppoRU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "660360420567-uc9a1ck2buqgugnlnph0o2sh6tubejhe.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
