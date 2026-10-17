@@ -8,29 +8,8 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
-      - name: Recreate Android with V2 embedding
-        run: |
-          cp pubspec.yaml /tmp/pubspec.yaml
-          rm -rf android
-          flutter create . --platforms=android --project-name what_now_ai
-          cp /tmp/pubspec.yaml pubspec.yaml
-      - name: Set own icon as launcher
-        run: |
-          mkdir -p android/app/src/main/res/mipmap-hdpi
-          mkdir -p android/app/src/main/res/mipmap-mdpi
-          mkdir -p android/app/src/main/res/mipmap-xhdpi
-          mkdir -p android/app/src/main/res/mipmap-xxhdpi
-          mkdir -p android/app/src/main/res/mipmap-xxxhdpi
-          cp assets/icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png
-          cp assets/icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
-          cp assets/icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
-          cp assets/icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-          cp assets/icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-          rm -f android/app/src/main/res/mipmap-*/ic_launcher_round.png || true
-          rm -f android/app/src/main/res/mipmap-*/ic_launcher_foreground.png || true
-      - run: flutter clean
       - run: flutter pub get
-      - run: flutter build apk --release --verbose
+      - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
           name: what-now-ai-apk
