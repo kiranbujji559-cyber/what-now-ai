@@ -13,14 +13,20 @@ jobs:
         with:
           flutter-version: '3.24.5'
           channel: 'stable'
+
       - name: Create Android Folder Fresh
         run: |
+          # Fix pubspec name to underscore
+          sed -i 's/name: what-now-ai/name: what_now_ai/' pubspec.yaml || true
+          cat pubspec.yaml | head -5
           rm -rf android
-          rm -f android/app/google-services.json
-          flutter create --platforms=android --org com.example .
+          flutter create --project-name what_now_ai --platforms=android --org com.example . --no-overwrite
           ls android/app/build.gradle
+          echo "SUCCESS - Android folder created!"
+
       - run: flutter pub get
       - run: flutter build apk --debug
+
       - uses: actions/upload-artifact@v4
         with:
           name: WHAT-NOW-AI-FINAL-APK
