@@ -16,13 +16,16 @@ jobs:
 
       - name: Create Android Folder Fresh
         run: |
-          # Fix pubspec name to underscore
           sed -i 's/name: what-now-ai/name: what_now_ai/' pubspec.yaml || true
-          cat pubspec.yaml | head -5
+          cp lib/main.dart /tmp/main.dart
           rm -rf android
-          flutter create --project-name what_now_ai --platforms=android --org com.example . --no-overwrite
-          ls android/app/build.gradle
-          echo "SUCCESS - Android folder created!"
+          flutter create --project-name what_now_ai --platforms=android --org com.example .
+          cp /tmp/main.dart lib/main.dart
+          # FIX SDK 35 - REAL FIX
+          sed -i 's/flutter.compileSdkVersion/35/g' android/app/build.gradle
+          sed -i 's/compileSdk .*/compileSdk 35/' android/app/build.gradle
+          echo "--- build.gradle fixed ---"
+          cat android/app/build.gradle | grep -i sdk
 
       - run: flutter pub get
       - run: flutter build apk --debug
