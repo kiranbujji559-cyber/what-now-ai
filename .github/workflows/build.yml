@@ -8,13 +8,45 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.3'
-      - name: Create fresh Android V2
+      - name: Build APK with Custom Icon
         run: |
+          # Backup important files
+          cp assets/icon.png /tmp/icon.png
+          cp android/app/google-services.json /tmp/google-services.json || true
+          
           rm -rf android
           flutter create . --platforms=android --project-name what_now_ai --org com.example --no-pub
-          ls android/app/src/main/kotlin/com/example/what_now_ai/
+          
+          # Restore
+          mkdir -p assets android/app
+          cp /tmp/icon.png assets/icon.png
+          cp /tmp/google-services.json android/app/google-services.json || true
+          
+          # Generate Android launcher icons from assets/icon.png (100% own icon)
+          python3 << 'PY'
+          from PIL import Image
+          import os
+          src = "assets/icon.png"
+          im = Image.open(src).convert("RGBA")
+          sizes = {
+            "mipmap-mdpi": 48,
+            "mipmap-hdpi": 72,
+            "mipmap-xhdpi": 96,
+            "mipmap-xxhdpi": 144,
+            "mipmap-xxxhdpi": 192,
+          }
+          for folder, size in sizes.items():
+            path = f"android/app/src/main/res/{folder}"
+            os.makedirs(path, exist_ok=True)
+            resized = im.resize((size, size), Image.LANCZOS)
+            resized.save(f"{path}/ic_launcher.png")
+            resized.save(f"{path}/ic_launcher_foreground.png")
+            print(f"Created {path}/ic_launcher.png {size}x{size}")
+          PY
+          
+          cat android/app/src/main/AndroidManifest.xml | grep icon || true
       - run: flutter pub get
-      - run: flutter build apk --release --verbose
+      - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
           name: what-now-ai-apk
