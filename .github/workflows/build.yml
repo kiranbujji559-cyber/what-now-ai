@@ -1,43 +1,55 @@
 name: Build APK
-on: [push]
+on:
+  push:
+    branches: [ main ]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          flutter-version: '3.22.3'
-      - name: Build APK with Custom Icon
+          distribution: 'zulu'
+          java-version: '17'
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: stable
+          cache: true
+      
+      - name: Prepare icon - REAL YOUR OWN ICON
         run: |
-          cp assets/icon.png /tmp/icon.png
-          cp android/app/google-services.json /tmp/google-services.json || true
-          
-          rm -rf android
-          flutter create . --platforms=android --project-name what_now_ai --org com.example --no-pub
-          
-          mkdir -p assets android/app
-          cp /tmp/icon.png assets/icon.png
-          cp /tmp/google-services.json android/app/google-services.json || true
-          
-          # Install PIL and generate icons
-          pip install Pillow -q
-          python3 << 'PY'
-          from PIL import Image
-          import os
-          src = "assets/icon.png"
-          im = Image.open(src).convert("RGBA")
-          sizes = {"mipmap-mdpi":48,"mipmap-hdpi":72,"mipmap-xhdpi":96,"mipmap-xxhdpi":144,"mipmap-xxxhdpi":192}
-          for folder, size in sizes.items():
-            path = f"android/app/src/main/res/{folder}"
-            os.makedirs(path, exist_ok=True)
-            resized = im.resize((size, size), Image.LANCZOS)
-            resized.save(f"{path}/ic_launcher.png")
-            print(f"Created {folder} {size}x{size}")
-          PY
-      - run: flutter pub get
-      - run: flutter build apk --release
-      - uses: actions/upload-artifact@v4
+          mkdir -p assets
+          if [ -f "icon.png" ]; then cp icon.png assets/icon.png; echo "Copied root icon.png to assets"; fi
+          if [ -f "what-now-ai/assets/icon.png" ]; then cp what-now-ai/assets/icon.png assets/icon.png; fi
+          ls -lh assets/icon.png || echo "WARNING: no assets/icon.png"
+          # Install ImageMagick for launcher icons
+          sudo apt-get update && sudo apt-get install -y imagemagick
+          # Generate launcher icons from your own icon
+          if [ -f assets/icon.png ]; then
+            for dir in android/app/src/main/res/mipmap-*; do
+              if [ -d "$dir" ]; then
+                SIZE=$(echo $dir | grep -o "[0-9]*" | tail -1)
+                if [ "$SIZE" = "hdpi" ]; then S=72; elif [ "$SIZE" = "mdpi" ]; then S=48; elif [ "$SIZE" = "xhdpi" ]; then S=96; elif [ "$SIZE" = "xxhdpi" ]; then S=144; elif [ "$SIZE" = "xxxhdpi" ]; then S=192; else S=72; fi
+                convert assets/icon.png -resize ${S}x${S} $dir/ic_launcher.png || cp assets/icon.png $dir/ic_launcher.png
+                echo "Generated $dir/ic_launcher.png ${S}x${S} - REAL YOUR ICON"
+              fi
+            done
+          fi
+      
+      - name: Get dependencies
+        run: flutter pub get
+      
+      - name: Build APK - REAL FEATURES
+        run: flutter build apk --release -v
+      
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: what-now-ai-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 10
