@@ -13,11 +13,7 @@ jobs:
           rm -f android/app/src/main/kotlin/com/example/what_now_ai/MainActivity.kt
           rm -f android/app/src/main/java/com/example/what_now_ai/MainActivity.java
           mkdir -p android/app/src/main/kotlin/com/example/what_now_ai
-          cat > android/app/src/main/kotlin/com/example/what_now_ai/MainActivity.kt <<'EOF'
-          package com.example.what_now_ai
-          import io.flutter.embedding.android.FlutterActivity
-          class MainActivity: FlutterActivity()
-          EOF
+          printf 'package com.example.what_now_ai\nimport io.flutter.embedding.android.FlutterActivity\nclass MainActivity: FlutterActivity()\n' > android/app/src/main/kotlin/com/example/what_now_ai/MainActivity.kt
           sed -i '/flutterEmbedding/d' android/app/src/main/AndroidManifest.xml || true
       - name: Set own icon as launcher
         run: |
