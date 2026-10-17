@@ -7,19 +7,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
-      - name: Recreate Android V2 + Fix Kotlin
+          flutter-version: '3.22.3'
+      - name: Create fresh Android V2
         run: |
-          cp pubspec.yaml /tmp/pubspec.yaml
           rm -rf android
-          flutter create . --platforms=android --project-name what_now_ai --org com.example
-          cp /tmp/pubspec.yaml pubspec.yaml
-          # Fix kotlin version - THIS IS THE FIX FOR YOUR ERROR
-          sed -i "s/ext.kotlin_version = '.*'/ext.kotlin_version = '1.9.22'/" android/build.gradle || true
-          sed -i "s/kotlin_version = '.*'/kotlin_version = '1.9.22'/" android/settings.gradle || true
-          cat android/build.gradle | grep kotlin
+          flutter create . --platforms=android --project-name what_now_ai --org com.example --no-pub
+          ls android/app/src/main/kotlin/com/example/what_now_ai/
       - run: flutter pub get
-      - run: flutter build apk --release
+      - run: flutter build apk --release --verbose
       - uses: actions/upload-artifact@v4
         with:
           name: what-now-ai-apk
