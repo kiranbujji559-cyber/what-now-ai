@@ -16,7 +16,7 @@ List<Map<String,String>> appHistory = [];
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  try{ await Firebase.initializeApp(); }catch(_){}
   final prefs = await SharedPreferences.getInstance();
   final hist = prefs.getString('history');
   if(hist != null){ try{ appHistory = List<Map<String,String>>.from(jsonDecode(hist).map((e)=>Map<String,String>.from(e))); }catch(_){} }
@@ -115,7 +115,7 @@ class _MainState extends State<MainScaffold> { int idx=0; @override Widget build
 
 class HomePage extends StatefulWidget { final String userName; const HomePage({required this.userName, super.key}); @override State<HomePage> createState()=>_HomeState; }
 class _HomeState extends State<HomePage> {
-  final ctrl=TextEditingController(); final picker=ImagePicker(); final recorder=AudioRecorder(); bool isRecording=false;
+  final ctrl=TextEditingController(); final picker=ImagePicker(); final recorder=Record(); bool isRecording=false;
   Future<void> saveHistory() async { final prefs=await SharedPreferences.getInstance(); prefs.setString('history', jsonEncode(appHistory)); }
   void addHistory(String input, String type){ appHistory.insert(0, {"title": input.length>40?"${input.substring(0,40)}...":input, "type":type, "time":DateTime.now().toIso8601String(), "full":input}); saveHistory(); }
   void whatNow(){
@@ -134,8 +134,17 @@ class _HomeState extends State<HomePage> {
   Future<void> doLink() async { final linkCtrl=TextEditingController(); showDialog(context: context, builder: (_)=>AlertDialog(title: const Text("Paste Link - REAL"), content: TextField(controller: linkCtrl, decoration: const InputDecoration(hintText: "https://...")), actions: [TextButton(onPressed: ()=>Navigator.pop(context), child: const Text("Cancel")), TextButton(onPressed: (){ setState(()=>ctrl.text=linkCtrl.text); Navigator.pop(context); }, child: const Text("Add")), TextButton(onPressed: () async { if(linkCtrl.text.isNotEmpty){ final uri=Uri.parse(linkCtrl.text); if(await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication); } }, child: const Text("Open"))])); }
   Future<void> doVoice() async {
     if(await Permission.microphone.request().isGranted){
-      if(!isRecording){ if(await recorder.hasPermission()){ await recorder.start(const RecordConfig(), path: "${Directory.systemTemp.path}/voice.m4a"); setState(()=>isRecording=true); } }
-      else { final path=await recorder.stop(); setState(()=>{isRecording=false; ctrl.text="Voice recorded: $path\nReady for analysis";}); }
+      if(!isRecording){ 
+        if(await recorder.hasPermission()){ 
+          await recorder.start(path: "${Directory.systemTemp.path}/voice.m4a"); 
+          setState(()=>isRecording=true); 
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Recording... tap again to stop")));
+        } 
+      } else { 
+        final path=await recorder.stop(); 
+        setState(()=>{isRecording=false; ctrl.text="Voice recorded: $path\nReady for analysis";}); 
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Voice saved: $path")));
+      }
     }
   }
   @override
