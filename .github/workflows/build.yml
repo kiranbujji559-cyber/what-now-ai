@@ -8,13 +8,16 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
-      - name: Recreate Android V2 fresh
+      - name: Recreate Android V2 + Fix Kotlin
         run: |
           cp pubspec.yaml /tmp/pubspec.yaml
           rm -rf android
           flutter create . --platforms=android --project-name what_now_ai --org com.example
           cp /tmp/pubspec.yaml pubspec.yaml
-          ls android/app/src/main/kotlin/com/example/what_now_ai/
+          # Fix kotlin version - THIS IS THE FIX FOR YOUR ERROR
+          sed -i "s/ext.kotlin_version = '.*'/ext.kotlin_version = '1.9.22'/" android/build.gradle || true
+          sed -i "s/kotlin_version = '.*'/kotlin_version = '1.9.22'/" android/settings.gradle || true
+          cat android/build.gradle | grep kotlin
       - run: flutter pub get
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
