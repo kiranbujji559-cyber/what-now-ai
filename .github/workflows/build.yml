@@ -13,20 +13,9 @@ jobs:
         with:
           flutter-version: '3.24.5'
           channel: 'stable'
-      - name: Prepare icon - REAL YOUR OWN ICON
-        run: |
-          mkdir -p assets
-          if [ ! -f assets/icon.png ]; then
-            echo "Creating dummy icon..."
-            flutter create --platforms=android .
-            cp android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png assets/icon.png || echo "dummy" > assets/icon.png
-          fi
-      - name: Get dependencies
-        run: flutter pub get
-      - name: Build APK - REAL FEATURES
-        run: flutter build apk --debug -v
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - run: flutter pub get
+      - run: flutter build apk --debug --verbose
+      - uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: build/app/outputs/flutter-apk/app-debug.apk
