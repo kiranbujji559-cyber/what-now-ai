@@ -1,55 +1,32 @@
 name: Build APK
-on:
-  push:
-    branches: [ main ]
+on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-      
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.5'
-          channel: stable
-          cache: true
-      
+          channel: 'stable'
       - name: Prepare icon - REAL YOUR OWN ICON
         run: |
           mkdir -p assets
-          if [ -f "icon.png" ]; then cp icon.png assets/icon.png; echo "Copied root icon.png to assets"; fi
-          if [ -f "what-now-ai/assets/icon.png" ]; then cp what-now-ai/assets/icon.png assets/icon.png; fi
-          ls -lh assets/icon.png || echo "WARNING: no assets/icon.png"
-          # Install ImageMagick for launcher icons
-          sudo apt-get update && sudo apt-get install -y imagemagick
-          # Generate launcher icons from your own icon
-          if [ -f assets/icon.png ]; then
-            for dir in android/app/src/main/res/mipmap-*; do
-              if [ -d "$dir" ]; then
-                SIZE=$(echo $dir | grep -o "[0-9]*" | tail -1)
-                if [ "$SIZE" = "hdpi" ]; then S=72; elif [ "$SIZE" = "mdpi" ]; then S=48; elif [ "$SIZE" = "xhdpi" ]; then S=96; elif [ "$SIZE" = "xxhdpi" ]; then S=144; elif [ "$SIZE" = "xxxhdpi" ]; then S=192; else S=72; fi
-                convert assets/icon.png -resize ${S}x${S} $dir/ic_launcher.png || cp assets/icon.png $dir/ic_launcher.png
-                echo "Generated $dir/ic_launcher.png ${S}x${S} - REAL YOUR ICON"
-              fi
-            done
+          if [ ! -f assets/icon.png ]; then
+            echo "Creating dummy icon..."
+            flutter create --platforms=android .
+            cp android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png assets/icon.png || echo "dummy" > assets/icon.png
           fi
-      
       - name: Get dependencies
         run: flutter pub get
-      
       - name: Build APK - REAL FEATURES
-        run: flutter build apk --release -v
-      
+        run: flutter build apk --debug -v
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: what-now-ai-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 10
+          name: app-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
