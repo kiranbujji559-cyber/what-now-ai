@@ -10,6 +10,11 @@ jobs:
           flutter-version: '3.24.0'
       - name: Set own icon as launcher
         run: |
+          mkdir -p android/app/src/main/res/mipmap-hdpi
+          mkdir -p android/app/src/main/res/mipmap-mdpi
+          mkdir -p android/app/src/main/res/mipmap-xhdpi
+          mkdir -p android/app/src/main/res/mipmap-xxhdpi
+          mkdir -p android/app/src/main/res/mipmap-xxxhdpi
           cp assets/icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png
           cp assets/icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
           cp assets/icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
