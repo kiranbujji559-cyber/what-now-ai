@@ -5,6 +5,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore working Android from green build #78
+        run: |
+          git checkout 9b4240e -- android || true
+          rm -rf android/.gradle
+          rm -rf android/app/build
+          rm -rf build
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
