@@ -1,7 +1,7 @@
 name: what_now_ai
 description: WHAT NOW AI
 publish_to: 'none'
-version: 5.0.0+5
+version: 6.0.0+10
 environment:
   sdk: '>=3.0.0 <4.0.0'
 dependencies:
@@ -13,3 +13,5 @@ dev_dependencies:
     sdk: flutter
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon.png
