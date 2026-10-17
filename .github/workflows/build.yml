@@ -26,8 +26,11 @@ jobs:
           cp assets/icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
           cp assets/icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
           cp assets/icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          rm -f android/app/src/main/res/mipmap-*/ic_launcher_round.png || true
+          rm -f android/app/src/main/res/mipmap-*/ic_launcher_foreground.png || true
+      - run: flutter clean
       - run: flutter pub get
-      - run: flutter build apk --release
+      - run: flutter build apk --release --verbose
       - uses: actions/upload-artifact@v4
         with:
           name: what-now-ai-apk
