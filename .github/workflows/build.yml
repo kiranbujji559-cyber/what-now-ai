@@ -11,11 +11,13 @@ jobs:
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
+          flutter-version: '3.19.6'
           channel: 'stable'
+          cache: true
+      - run: flutter clean
       - run: flutter pub get
-      - run: flutter build apk --debug --verbose
+      - run: flutter build apk --debug
       - uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: WHAT-NOW-AI-REAL-APK
           path: build/app/outputs/flutter-apk/app-debug.apk
