@@ -8,24 +8,13 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
-      - name: Fix V1 embedding to V2
+      - name: Recreate Android V2 fresh
         run: |
-          # Fix AndroidManifest
-          MANIFEST=$(find android -name AndroidManifest.xml | head -n 1)
-          echo "Manifest: $MANIFEST"
-          sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="${applicationName}"/g' $MANIFEST || true
-          sed -i '/flutterEmbedding/d' $MANIFEST || true
-          sed -i '/io.flutter.app.FlutterApplication/d' $MANIFEST || true
-          cat $MANIFEST
-          # Recreate MainActivity V2
-          rm -rf android/app/src/main/java
-          mkdir -p android/app/src/main/kotlin/com/example/what_now_ai
-          cat > android/app/src/main/kotlin/com/example/what_now_ai/MainActivity.kt << 'EOF'
-          package com.example.what_now_ai
-          import io.flutter.embedding.android.FlutterActivity
-          class MainActivity: FlutterActivity()
-          EOF
-          cat android/app/src/main/kotlin/com/example/what_now_ai/MainActivity.kt
+          cp pubspec.yaml /tmp/pubspec.yaml
+          rm -rf android
+          flutter create . --platforms=android --project-name what_now_ai --org com.example
+          cp /tmp/pubspec.yaml pubspec.yaml
+          ls android/app/src/main/kotlin/com/example/what_now_ai/
       - run: flutter pub get
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
