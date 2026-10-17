@@ -5,40 +5,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-          
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6'
+          flutter-version: '3.24.5'
           channel: 'stable'
-          cache: true
-
-      - name: Fix Missing Android Files - THIS IS THE REAL FIX
+      - name: Create Android Folder Fresh
         run: |
-          echo "Checking android/app/build.gradle..."
-          ls -la android/app/ || echo "No app folder"
-          # If build.gradle missing, recreate full android project
-          if [ ! -f "android/app/build.gradle" ]; then
-            echo "build.gradle MISSING - Recreating android folder..."
-            # Backup google-services.json if exists
-            cp android/app/google-services.json /tmp/ 2>/dev/null || echo "No google file to backup"
-            rm -rf android
-            flutter create --platforms=android .
-            # Restore google-services.json
-            cp /tmp/google-services.json android/app/ 2>/dev/null || echo "No backup to restore"
-          fi
-          ls -la android/app/build.gradle
-          echo "Android files fixed!"
-
-      - run: flutter clean
+          rm -rf android
+          rm -f android/app/google-services.json
+          flutter create --platforms=android --org com.example .
+          ls android/app/build.gradle
       - run: flutter pub get
-      - run: flutter build apk --debug --verbose
-
+      - run: flutter build apk --debug
       - uses: actions/upload-artifact@v4
         with:
-          name: WHAT-NOW-AI-REAL-APK-FIXED
+          name: WHAT-NOW-AI-FINAL-APK
           path: build/app/outputs/flutter-apk/app-debug.apk
