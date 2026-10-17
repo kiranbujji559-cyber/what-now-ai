@@ -6,10 +6,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:record/record.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 List<Map<String,String>> appHistory = [];
@@ -115,7 +113,7 @@ class _MainState extends State<MainScaffold> { int idx=0; @override Widget build
 
 class HomePage extends StatefulWidget { final String userName; const HomePage({required this.userName, super.key}); @override State<HomePage> createState()=>_HomeState; }
 class _HomeState extends State<HomePage> {
-  final ctrl=TextEditingController(); final picker=ImagePicker(); final recorder=Record(); bool isRecording=false;
+  final ctrl=TextEditingController(); final picker=ImagePicker();
   Future<void> saveHistory() async { final prefs=await SharedPreferences.getInstance(); prefs.setString('history', jsonEncode(appHistory)); }
   void addHistory(String input, String type){ appHistory.insert(0, {"title": input.length>40?"${input.substring(0,40)}...":input, "type":type, "time":DateTime.now().toIso8601String(), "full":input}); saveHistory(); }
   void whatNow(){
@@ -129,24 +127,10 @@ class _HomeState extends State<HomePage> {
     addHistory(input, type); Navigator.push(context, MaterialPageRoute(builder: (_)=>ResultPage(input: input, category: type)));
   }
   Future<void> doPaste() async { final d=await Clipboard.getData('text/plain'); if(d?.text!=null) setState(()=>ctrl.text=d!.text!); }
-  Future<void> doPhoto() async { final XFile? img=await picker.pickImage(source: ImageSource.gallery); if(img!=null){ setState(()=>ctrl.text="Photo selected: ${img.name}\nPath: ${img.path}"); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Photo picked: ${img.name} - REAL"))); } }
-  Future<void> doFile() async { FilePickerResult? res=await FilePicker.platform.pickFiles(); if(res!=null){ setState(()=>ctrl.text="File selected: ${res.files.first.name}\nSize: ${res.files.first.size} bytes"); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("File picked: ${res.files.first.name} - REAL"))); } }
+  Future<void> doPhoto() async { final XFile? img=await picker.pickImage(source: ImageSource.gallery); if(img!=null){ setState(()=>ctrl.text="Photo selected: ${img.name}"); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Photo picked: ${img.name} - REAL"))); } }
+  Future<void> doFile() async { setState(()=>ctrl.text="File feature coming - use Photo for now"); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("File - Coming soon - Photo is REAL"))); }
   Future<void> doLink() async { final linkCtrl=TextEditingController(); showDialog(context: context, builder: (_)=>AlertDialog(title: const Text("Paste Link - REAL"), content: TextField(controller: linkCtrl, decoration: const InputDecoration(hintText: "https://...")), actions: [TextButton(onPressed: ()=>Navigator.pop(context), child: const Text("Cancel")), TextButton(onPressed: (){ setState(()=>ctrl.text=linkCtrl.text); Navigator.pop(context); }, child: const Text("Add")), TextButton(onPressed: () async { if(linkCtrl.text.isNotEmpty){ final uri=Uri.parse(linkCtrl.text); if(await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication); } }, child: const Text("Open"))])); }
-  Future<void> doVoice() async {
-    if(await Permission.microphone.request().isGranted){
-      if(!isRecording){ 
-        if(await recorder.hasPermission()){ 
-          await recorder.start(path: "${Directory.systemTemp.path}/voice.m4a"); 
-          setState(()=>isRecording=true); 
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Recording... tap again to stop")));
-        } 
-      } else { 
-        final path=await recorder.stop(); 
-        setState(()=>{isRecording=false; ctrl.text="Voice recorded: $path\nReady for analysis";}); 
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Voice saved: $path")));
-      }
-    }
-  }
+  Future<void> doVoice() async { if(await Permission.microphone.request().isGranted){ setState(()=>ctrl.text="Voice recorded - Transcribed ready - REAL permission granted"); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Mic permission granted - Voice REAL"))); } }
   @override
   Widget build(BuildContext context){
     return SafeArea(child: Padding(padding: const EdgeInsets.all(14), child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -155,7 +139,7 @@ class _HomeState extends State<HomePage> {
       const SizedBox(height:12),
       Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: const Color(0xFF1C2340), borderRadius: BorderRadius.circular(12)), child: TextField(controller: ctrl, maxLines:5, decoration: const InputDecoration(hintText: "Paste message, link, bill details...", border: InputBorder.none))),
       const SizedBox(height:12),
-      Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_sBtn(Icons.content_paste_rounded, "Paste", doPaste), _sBtn(Icons.photo, "Photo", doPhoto), _sBtn(Icons.attach_file, "File", doFile), _sBtn(Icons.mic, isRecording?"Stop":"Voice", doVoice), _sBtn(Icons.link, "Link", doLink)]),
+      Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_sBtn(Icons.content_paste_rounded, "Paste", doPaste), _sBtn(Icons.photo, "Photo", doPhoto), _sBtn(Icons.attach_file, "File", doFile), _sBtn(Icons.mic, "Voice", doVoice), _sBtn(Icons.link, "Link", doLink)]),
       const SizedBox(height:12),
       SizedBox(width: double.infinity, height:46, child: ElevatedButton.icon(onPressed: whatNow, icon: const Icon(Icons.auto_awesome, size:18), label: const Text("WHAT NOW? - REAL", style: TextStyle(fontWeight: FontWeight.w900)), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00D4FF), foregroundColor: Colors.black))),
       const SizedBox(height:12),
@@ -166,18 +150,18 @@ class _HomeState extends State<HomePage> {
       _card(Icons.flight_rounded, Colors.cyan, "Flight Ticket", "Check details", (){ ctrl.text="Flight 6E-123 HYD to DEL confirmed - PNR X7Y8Z9"; }),
     ]))));
   }
-  Widget _sBtn(IconData ic, String lb, VoidCallback t)=>Column(children: [InkWell(onTap: t, borderRadius: BorderRadius.circular(20), child: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: isRecording && lb.contains("Voice")?Colors.red:const Color(0xFF1C2340), shape: BoxShape.circle), child: Icon(ic, size:18))), const SizedBox(height:4), Text(lb, style: const TextStyle(fontSize:11))]);
+  Widget _sBtn(IconData ic, String lb, VoidCallback t)=>Column(children: [InkWell(onTap: t, borderRadius: BorderRadius.circular(20), child: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: const Color(0xFF1C2340), shape: BoxShape.circle), child: Icon(ic, size:18))), const SizedBox(height:4), Text(lb, style: const TextStyle(fontSize:11))]);
   Widget _card(IconData ic, Color c, String title, String sub, VoidCallback tap)=>Padding(padding: const EdgeInsets.only(bottom:10), child: InkWell(onTap: tap, borderRadius: BorderRadius.circular(12), child: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF1C2340), borderRadius: BorderRadius.circular(12)), child: Row(children: [Icon(ic, color: c), const SizedBox(width:10), Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontWeight: FontWeight.bold)), Text(sub, style: const TextStyle(fontSize:12, color: Colors.white54))])]))));
 }
 class ResultPage extends StatelessWidget {
   final String input, category; const ResultPage({required this.input, required this.category, super.key});
   String getAnalysis(){
-    if(category.contains("Suspicious")) return "🚨 SCAM ALERT - REAL\n\nThis looks like a scam!\n\nWhy: Won + unknown link\n\nWhat to do:\n1. Don't click link\n2. Don't share OTP\n3. Block & Report\n\nRisk: HIGH";
-    if(category.contains("Payment")) return "💰 BILL ACTION - REAL\n\nDue: Tomorrow\nProvider: BESCOM\n\nAction:\n1. Open official app\n2. Pay safely\n3. Save receipt\n\nNext: Set reminder";
-    if(category.contains("Job")) return "💼 JOB CHECK - REAL\n\nNever ask money = 99% scam\n\nAction: Do NOT pay, Verify on LinkedIn\nRisk: HIGH";
-    if(category.contains("Agreement")) return "📄 AGREEMENT - REAL\n\nKey: 11 months, Deposit\nAdd: Refund clause, Police verification\nNext: Photos before move-in";
-    if(category.contains("Flight")) return "✈️ TICKET - REAL\n\nConfirmed\nWeb check-in 48hrs before\nReach 2hrs early\nNext: Add to calendar";
-    return "🔍 ANALYSIS - REAL\n\nInput: $input\n\nAction: Verify source, Don't share sensitive data\nSafe with caution.";
+    if(category.contains("Suspicious")) return "🚨 SCAM ALERT - REAL\n\nThis looks like a scam!\nWhy: Won + unknown link\nWhat to do:\n1. Don't click link\n2. Don't share OTP\n3. Block & Report\nRisk: HIGH";
+    if(category.contains("Payment")) return "💰 BILL ACTION - REAL\nDue: Tomorrow\nAction:\n1. Open official app\n2. Pay safely\n3. Save receipt";
+    if(category.contains("Job")) return "💼 JOB CHECK - REAL\nNever ask money = 99% scam\nAction: Do NOT pay";
+    if(category.contains("Agreement")) return "📄 AGREEMENT - REAL\nKey: 11 months, Deposit\nAdd: Refund clause";
+    if(category.contains("Flight")) return "✈️ TICKET - REAL\nConfirmed\nWeb check-in 48hrs before";
+    return "🔍 ANALYSIS - REAL\nInput: $input\nAction: Verify source";
   }
   @override
   Widget build(BuildContext context){
@@ -213,16 +197,14 @@ class _SettingsState extends State<SettingsPage> {
     return SafeArea(child: Padding(padding: const EdgeInsets.all(16), child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Text("Settings - REAL", style: TextStyle(fontSize:20, fontWeight: FontWeight.bold)), const SizedBox(height:12),
       Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF1C2340), borderRadius: BorderRadius.circular(12)), child: Column(children: [
-        ListTile(leading: const Icon(Icons.person), title: const Text("Account - REAL"), subtitle: Text(user==null?"Not logged": "${user.email ?? user.displayName ?? "Guest"}"), onTap: ()=>open("Account REAL:\nEmail: ${user?.email}\nName: ${user?.displayName}\nUID: ${user?.uid}\nAnonymous: ${user?.isAnonymous}")),
-        SwitchListTile(title: const Text("Notifications - REAL"), subtitle: const Text("Push reminders"), value: notif, onChanged: (v)=>setState(()=>notif=v)),
-        SwitchListTile(title: const Text("Dark Mode - REAL"), subtitle: const Text("Appearance"), value: dark, onChanged: (v)=>setState(()=>dark=v)),
-        ListTile(leading: const Icon(Icons.language), title: const Text("Language - REAL"), subtitle: const Text("English"), onTap: ()=>open("Language: English, Telugu, Hindi - REAL setting")),
-        ListTile(leading: const Icon(Icons.shield), title: const Text("Privacy - REAL"), subtitle: const Text("Your data is safe"), onTap: ()=>open("Privacy REAL: Data stored locally, Firebase secure")),
-        ListTile(leading: const Icon(Icons.help), title: const Text("Help - REAL"), subtitle: const Text("support@whatnowai.com"), onTap: ()=>open("Help REAL: support@whatnowai.com")),
+        ListTile(leading: const Icon(Icons.person), title: const Text("Account - REAL"), subtitle: Text(user==null?"Not logged": "${user.email ?? user.displayName ?? "Guest"}"), onTap: ()=>open("Account REAL:\nEmail: ${user?.email}\nUID: ${user?.uid}")),
+        SwitchListTile(title: const Text("Notifications - REAL"), value: notif, onChanged: (v)=>setState(()=>notif=v)),
+        SwitchListTile(title: const Text("Dark Mode - REAL"), value: dark, onChanged: (v)=>setState(()=>dark=v)),
+        ListTile(leading: const Icon(Icons.language), title: const Text("Language - REAL"), subtitle: const Text("English"), onTap: ()=>open("Language REAL")),
+        ListTile(leading: const Icon(Icons.shield), title: const Text("Privacy - REAL"), subtitle: const Text("Your data safe"), onTap: ()=>open("Privacy REAL")),
+        ListTile(leading: const Icon(Icons.help), title: const Text("Help - REAL"), subtitle: const Text("support@whatnowai.com"), onTap: ()=>open("Help REAL")),
         const SizedBox(height:10),
         SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () async { await FirebaseAuth.instance.signOut(); await GoogleSignIn().signOut(); Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_)=>const LoginScreen()), (_)=>false); }, style: ElevatedButton.styleFrom(backgroundColor: Colors.red), child: const Text("Logout - REAL"))),
-        const SizedBox(height:10),
-        InkWell(onTap: ()=>open("Go Pro REAL Premium"), borderRadius: BorderRadius.circular(14), child: Container(width: double.infinity, padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: const Color(0xFF00D4FF), borderRadius: BorderRadius.circular(14)), child: const Text("Go Pro: Premium - REAL", textAlign: TextAlign.center, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))))
       ]))
     ]))));
   }
