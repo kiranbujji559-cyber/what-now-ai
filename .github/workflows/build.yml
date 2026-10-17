@@ -14,15 +14,18 @@ jobs:
           flutter-version: '3.24.5'
           channel: 'stable'
 
-      - name: Create Android and Set Your Own Icon
+      - name: Create Android and Keep Firebase file
         run: |
           sed -i 's/name: what-now-ai/name: what_now_ai/' pubspec.yaml || true
+          mkdir -p /tmp/save
+          if [ -f android/app/google-services.json ]; then cp android/app/google-services.json /tmp/save/; echo "FOUND REAL FIREBASE FILE!"; fi
+          if [ -f google-services.json ]; then cp google-services.json /tmp/save/google-services.json; fi
           cp lib/main.dart /tmp/main.dart
           rm -rf android
           flutter create --project-name what_now_ai --platforms=android --org com.example .
           cp /tmp/main.dart lib/main.dart
           sed -i 's/flutter.compileSdkVersion/35/g' android/app/build.gradle
-          echo "Setting your ROBOT icon as app icon..."
+          if [ -f /tmp/save/google-services.json ]; then cp /tmp/save/google-services.json android/app/google-services.json; echo "RESTORED REAL google-services.json!"; ls android/app/google-services.json; fi
           cp assets/icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
           cp assets/icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
           cp assets/icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
@@ -36,5 +39,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: WHAT-NOW-AI-YOUR-ICON
+          name: WHAT-NOW-AI-FIREBASE-REAL-LOGIN
           path: build/app/outputs/flutter-apk/app-debug.apk
