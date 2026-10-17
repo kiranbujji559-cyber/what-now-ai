@@ -8,10 +8,16 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
-      - name: Fix Android V1 embedding
+      - name: Fix Android V1 embedding to V2
         run: |
-          rm -rf android
-          flutter create . --platforms=android --project-name what_now_ai
+          rm -f android/app/src/main/kotlin/com/example/what_now_ai/MainActivity.kt
+          rm -f android/app/src/main/java/com/example/what_now_ai/MainActivity.java
+          mkdir -p android/app/src/main/kotlin/com/example/what_now_ai
+          echo "package com.example.what_now_ai
+          import io.flutter.embedding.android.FlutterActivity
+          class MainActivity: FlutterActivity()" > android/app/src/main/kotlin/com/example/what_now_ai/MainActivity.kt
+          sed -i '/flutterEmbedding/d' android/app/src/main/AndroidManifest.xml || true
+          sed -i '/android:name="io.flutter.embedding.android.SplashScreenDrawable"/d' android/app/src/main/AndroidManifest.xml || true
       - name: Set own icon as launcher
         run: |
           mkdir -p android/app/src/main/res/mipmap-hdpi
