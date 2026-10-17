@@ -7,7 +7,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6'
+          flutter-version: '3.24.0'
+      - name: Fix Android V1 embedding
+        run: |
+          rm -rf android
+          flutter create . --platforms=android --project-name what_now_ai
       - name: Set own icon as launcher
         run: |
           mkdir -p android/app/src/main/res/mipmap-hdpi
