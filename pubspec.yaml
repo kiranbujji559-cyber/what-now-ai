@@ -11,14 +11,12 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.6
   firebase_core: ^2.24.2
-  firebase_auth: ^4.16.0
-  google_sign_in: ^6.2.1
+  firebase_auth: ^4.15.3
+  google_sign_in: ^6.1.12
   image_picker: ^1.0.7
-  file_picker: ^8.0.7
   shared_preferences: ^2.2.2
-  url_launcher: ^6.2.2
-  record: ^4.4.4
-  permission_handler: ^11.3.1
+  url_launcher: ^6.2.1
+  permission_handler: ^11.0.1
 
 dev_dependencies:
   flutter_test:
