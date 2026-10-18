@@ -1,74 +1,23 @@
-name: Build APK
-on: [push]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.5'
-          channel: 'stable'
+name: what_now_ai
+description: WHAT NOW AI - Real Scam Detector
+publish_to: 'none'
+version: 1.0.0+1
 
-      - name: Setup Firebase & Android
-        run: |
-          mkdir -p /tmp/save
-          if [ -f android/app/google-services.json ]; then cp android/app/google-services.json /tmp/save/; echo "FOUND REAL FILE in android/app"; fi
-          if [ -f google-services.json ]; then cp google-services.json /tmp/save/google-services.json; fi
-          cp lib/main.dart /tmp/main.dart || true
-          cp pubspec.yaml /tmp/pubspec.yaml || true
-          
-          if [ ! -d android ]; then
-            flutter create --project-name what_now_ai --platforms=android --org com.example .
-          fi
-          
-          cp /tmp/main.dart lib/main.dart || true
-          cp /tmp/pubspec.yaml pubspec.yaml || true
-          mkdir -p android/app
-          if [ -f /tmp/save/google-services.json ]; then cp /tmp/save/google-services.json android/app/google-services.json; echo "RESTORED REAL google-services.json!"; ls -lh android/app/google-services.json; fi
-          
-          echo "Checking gradle files:"
-          ls android/app/build.gradle* || true
-          ls android/build.gradle* || true
-          
-          # Try add google-services plugin - ignore errors
-          if [ -f android/app/build.gradle ]; then
-            if ! grep -q "google-services" android/app/build.gradle; then
-              sed -i 's/id "com.android.application"/id "com.android.application"\n    id "com.google.gms.google-services"/' android/app/build.gradle || true
-            fi
-          fi
-          if [ -f android/app/build.gradle.kts ]; then
-            if ! grep -q "google-services" android/app/build.gradle.kts; then
-              sed -i 's/id("com.android.application")/id("com.android.application")\n    id("com.google.gms.google-services")/' android/app/build.gradle.kts || true
-            fi
-          fi
-          if [ -f android/build.gradle ]; then
-            if ! grep -q "google-services" android/build.gradle; then
-              sed -i "s/dependencies {/dependencies {\n        classpath 'com.google.gms:google-services:4.4.1'/" android/build.gradle || true
-            fi
-          fi
-          if [ -f android/build.gradle.kts ]; then
-            if ! grep -q "google-services" android/build.gradle.kts; then
-              sed -i "s/dependencies {/dependencies {\n        classpath(\"com.google.gms:google-services:4.4.1\")/" android/build.gradle.kts || true
-            fi
-          fi
-          
-          if [ -f assets/icon.png ]; then
-            cp assets/icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png || true
-            cp assets/icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png || true
-            cp assets/icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png || true
-            cp assets/icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png || true
-            cp assets/icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png || true
-          fi
+environment:
+  sdk: '>=3.0.0 <4.0.0'
 
-      - run: flutter pub get
-      - run: flutter build apk --debug
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: ^2.24.0
+  firebase_auth: ^4.15.0
+  google_sign_in: ^6.1.6
+  image_picker: ^1.0.7
+  file_picker: ^8.0.7
+  shared_preferences: ^2.2.2
+  url_launcher: ^6.2.1
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: WHAT-NOW-AI-FIREBASE-REAL-LOGIN
-          path: build/app/outputs/flutter-apk/app-debug.apk
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon.png
