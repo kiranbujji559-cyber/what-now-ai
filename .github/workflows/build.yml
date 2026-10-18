@@ -1,23 +1,68 @@
-name: what_now_ai
-description: WHAT NOW AI - Real Scam Detector
-publish_to: 'none'
-version: 1.0.0+1
+name: Build APK
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.6'
+          channel: 'stable'
 
-environment:
-  sdk: '>=3.0.0 <4.0.0'
+      - name: Build APK Real Firebase
+        run: |
+          mkdir -p /tmp/save
+          cp android/app/google-services.json /tmp/save/ 2>/dev/null && echo "SAVED google-services.json" || echo "No file in android/app"
+          cp google-services.json /tmp/save/google-services.json 2>/dev/null || true
+          cp lib/main.dart /tmp/main.dart
+          cp pubspec.yaml /tmp/pubspec.yaml
+          
+          rm -rf android
+          flutter create --project-name what_now_ai --platforms=android --org com.example.whatnowai .
+          
+          cp /tmp/main.dart lib/main.dart
+          cp /tmp/pubspec.yaml pubspec.yaml
+          mkdir -p android/app
+          cp /tmp/save/google-services.json android/app/google-services.json && echo "RESTORED REAL JSON" && ls -lh android/app/google-services.json
+          
+          python3 << 'PY'
+          import pathlib
+          p = pathlib.Path("android/build.gradle")
+          if p.exists():
+              t = p.read_text()
+              if "google-services" not in t:
+                  t = t.replace("dependencies {", "dependencies {\n        classpath 'com.google.gms:google-services:4.4.0'")
+                  p.write_text(t)
+                  print("Fixed android/build.gradle")
+          p = pathlib.Path("android/build.gradle.kts")
+          if p.exists():
+              t = p.read_text()
+              if "google-services" not in t:
+                  t = t.replace("dependencies {", "dependencies {\n        classpath(\"com.google.gms:google-services:4.4.0\")")
+                  p.write_text(t)
+                  print("Fixed android/build.gradle.kts")
+          for path in ["android/app/build.gradle", "android/app/build.gradle.kts"]:
+              p = pathlib.Path(path)
+              if p.exists():
+                  t = p.read_text()
+                  if "google-services" not in t:
+                      if 'id "com.android.application"' in t:
+                          t = t.replace('id "com.android.application"', 'id "com.android.application"\n    id "com.google.gms.google-services"')
+                      if 'id("com.android.application")' in t:
+                          t = t.replace('id("com.android.application")', 'id("com.android.application")\n    id("com.google.gms.google-services")')
+                      p.write_text(t)
+                      print(f"Fixed {path}")
+          PY
+          
+          flutter pub get
+          flutter build apk --debug
 
-dependencies:
-  flutter:
-    sdk: flutter
-  firebase_core: ^2.24.0
-  firebase_auth: ^4.15.0
-  google_sign_in: ^6.1.6
-  image_picker: ^1.0.7
-  file_picker: ^8.0.7
-  shared_preferences: ^2.2.2
-  url_launcher: ^6.2.1
-
-flutter:
-  uses-material-design: true
-  assets:
-    - assets/icon.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WHAT-NOW-AI-FINAL-WORKING-APK
+          path: build/app/outputs/flutter-apk/app-debug.apk
