@@ -17,7 +17,7 @@ jobs:
       - name: Build APK Real Firebase
         run: |
           mkdir -p /tmp/save
-          cp android/app/google-services.json /tmp/save/ 2>/dev/null && echo "SAVED" || echo "No file"
+          cp android/app/google-services.json /tmp/save/ 2>/dev/null || true
           cp google-services.json /tmp/save/google-services.json 2>/dev/null || true
           cp lib/main.dart /tmp/main.dart
           cp pubspec.yaml /tmp/pubspec.yaml
@@ -28,18 +28,27 @@ jobs:
           cp /tmp/main.dart lib/main.dart
           cp /tmp/pubspec.yaml pubspec.yaml
           mkdir -p android/app
-          cp /tmp/save/google-services.json android/app/google-services.json && echo "RESTORED" && ls -lh android/app/google-services.json
+          cp /tmp/save/google-services.json android/app/google-services.json
+          echo "RESTORED JSON"
           
+          # FIX 1: settings.gradle - add google-services version
           python3 << 'PY'
           import pathlib
-          for path in ["android/build.gradle", "android/build.gradle.kts"]:
-              p = pathlib.Path(path)
+          # Fix settings.gradle
+          for p in [pathlib.Path("android/settings.gradle"), pathlib.Path("android/settings.gradle.kts")]:
               if p.exists():
                   t = p.read_text()
                   if "google-services" not in t:
-                      t = t.replace("dependencies {", "dependencies {\n        classpath 'com.google.gms:google-services:4.4.0'\n        classpath \"com.google.gms:google-services:4.4.0\"")
+                      if "id(\"dev.flutter.flutter-plugin-loader\")" in t:
+                          t = t.replace('id("dev.flutter.flutter-plugin-loader")', 'id("dev.flutter.flutter-plugin-loader") version "1.0.0"\n        id("com.google.gms.google-services") version "4.4.0" apply false')
+                      elif "id 'dev.flutter.flutter-plugin-loader'" in t:
+                          t = t.replace("id 'dev.flutter.flutter-plugin-loader'", "id 'dev.flutter.flutter-plugin-loader' version '1.0.0'\n        id 'com.google.gms.google-services' version '4.4.0' apply false")
+                      else:
+                          # fallback add to plugins block
+                          t = t.replace("plugins {", "plugins {\n        id(\"com.google.gms.google-services\") version \"4.4.0\" apply false\n")
                       p.write_text(t)
-                      print(f"Fixed {path}")
+                      print(f"Fixed {p}")
+          # Fix app build.gradle - add plugin without version
           for path in ["android/app/build.gradle", "android/app/build.gradle.kts"]:
               p = pathlib.Path(path)
               if p.exists():
@@ -53,6 +62,7 @@ jobs:
                       print(f"Fixed {path}")
           PY
           
+          cat android/settings.gradle
           flutter pub get
           flutter build apk --debug
 
