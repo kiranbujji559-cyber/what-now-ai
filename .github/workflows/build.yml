@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK AAB
 on: [push]
 jobs:
   build:
@@ -11,37 +11,34 @@ jobs:
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6'
+          flutter-version: '3.22.3'
           channel: 'stable'
-
-      - name: Build APK Real Firebase
+      - name: Build REAL APK AAB
         run: |
-          # Save only main.dart and pubspec
-          cp lib/main.dart /tmp/m.dart
-          cp pubspec.yaml /tmp/p.yaml
-          
-          # Clean create - NO android backup needed
-          rm -rf android
-          flutter create --project-name what_now_ai --platforms=android --org com.example.whatnowai .
-          
-          cp /tmp/m.dart lib/main.dart
-          cp /tmp/p.yaml pubspec.yaml
-          
-          # Copy icon and google json (google json just for reference, not used in build)
-          mkdir -p assets
-          cp -r /tmp/assets/* assets/ 2>/dev/null || true
-          # If assets/icon.png exists in repo, restore it
-          cp -r assets assets_bak 2>/dev/null || true
-          # Ensure google-services.json exists for Firebase at runtime (but no gradle plugin)
-          cp /tmp/g.json android/app/google-services.json 2>/dev/null || cp google-services.json android/app/google-services.json 2>/dev/null || echo "No google json - ok for build"
-          
-          echo "=== BUILD WITHOUT GOOGLE SERVICES PLUGIN ==="
-          echo "This will 100% GREEN - no gradle plugin error!"
-          
+          if [ ! -f "android/build.gradle" ]; then
+            flutter create . --platforms=android --project-name what_now_ai --org com.example
+          fi
+          python3 << 'PY'
+          import pathlib
+          b = pathlib.Path("android/build.gradle")
+          t = b.read_text()
+          if "google-services" not in t:
+              t = t.replace("dependencies {", "dependencies {\n        classpath 'com.google.gms:google-services:4.4.0'", 1)
+              b.write_text(t)
+          a = pathlib.Path("android/app/build.gradle")
+          t2 = a.read_text()
+          if "google-services" not in t2:
+              t2 = t2.replace("apply plugin: 'com.android.application'", "apply plugin: 'com.android.application'\napply plugin: 'com.google.gms.google-services'")
+              a.write_text(t2)
+          PY
           flutter pub get
-          flutter build apk --debug
-
+          flutter build apk --release
+          flutter build appbundle --release
       - uses: actions/upload-artifact@v4
         with:
-          name: WHAT-NOW-AI-FINAL-WORKING-APK
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: WHAT-NOW-AI-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WHAT-NOW-AI-AAB
+          path: build/app/outputs/bundle/release/app-release.aab
