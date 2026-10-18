@@ -13,7 +13,7 @@ dependencies:
   firebase_auth: 4.15.0
   google_sign_in: 6.1.6
   image_picker: 1.0.7
-  file_picker: 8.0.7
+  file_picker: 6.1.1
   shared_preferences: 2.2.2
   url_launcher: 6.2.1
 
