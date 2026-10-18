@@ -14,30 +14,53 @@ jobs:
           flutter-version: '3.24.5'
           channel: 'stable'
 
-      - name: Create Android and Keep Firebase file
+      - name: Setup Firebase & Android
         run: |
-          sed -i 's/name: what-now-ai/name: what_now_ai/' pubspec.yaml || true
+          # Save firebase file
           mkdir -p /tmp/save
-          if [ -f android/app/google-services.json ]; then cp android/app/google-services.json /tmp/save/; echo "FOUND REAL FIREBASE FILE!"; fi
-          if [ -f google-services.json ]; then cp google-services.json /tmp/save/google-services.json; fi
+          if [ -f android/app/google-services.json ]; then cp android/app/google-services.json /tmp/save/; echo "FOUND REAL FILE in android/app"; fi
+          if [ -f google-services.json ]; then cp google-services.json /tmp/save/google-services.json; echo "FOUND in root"; fi
           cp lib/main.dart /tmp/main.dart
-          rm -rf android
-          flutter create --project-name what_now_ai --platforms=android --org com.example .
+          cp pubspec.yaml /tmp/pubspec.yaml
+          
+          # Only create android if missing
+          if [ ! -d android ]; then
+            flutter create --project-name what_now_ai --platforms=android --org com.example .
+          fi
+          
           cp /tmp/main.dart lib/main.dart
-          sed -i 's/flutter.compileSdkVersion/35/g' android/app/build.gradle
-          if [ -f /tmp/save/google-services.json ]; then cp /tmp/save/google-services.json android/app/google-services.json; echo "RESTORED REAL google-services.json!"; ls android/app/google-services.json; fi
-          cp assets/icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-          cp assets/icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-          cp assets/icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
-          cp assets/icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png
-          cp assets/icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
-          cp assets/icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
-          cp assets/icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+          cp /tmp/pubspec.yaml pubspec.yaml
+          
+          # Restore firebase file
+          mkdir -p android/app
+          if [ -f /tmp/save/google-services.json ]; then cp /tmp/save/google-services.json android/app/google-services.json; echo "RESTORED REAL google-services.json!"; ls -lh android/app/google-services.json; fi
+          
+          # Add google-services plugin if missing
+          if ! grep -q "google-services" android/app/build.gradle; then
+            echo "Adding google-services plugin..."
+            sed -i "s/id \"com.android.application\"/id \"com.android.application\"\n    id \"com.google.gms.google-services\"/" android/app/build.gradle
+          fi
+          if ! grep -q "google-services" android/build.gradle; then
+            sed -i "s/dependencies {/dependencies {\n        classpath 'com.google.gms:google-services:4.4.1'/" android/build.gradle || true
+            sed -i "s/buildscript {/buildscript {\n    dependencies {\n        classpath 'com.google.gms:google-services:4.4.1'\n    }\n}\nbuildscript {/" android/build.gradle || echo "build.gradle already ok"
+          fi
+          
+          # Icons
+          if [ -f assets/icon.png ]; then
+            mkdir -p android/app/src/main/res/mipmap-xxxhdpi android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-mdpi
+            cp assets/icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png || true
+            cp assets/icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png || true
+            cp assets/icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png || true
+            cp assets/icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png || true
+            cp assets/icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png || true
+            cp assets/icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png || true
+            cp assets/icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png || true
+          fi
 
       - run: flutter pub get
       - run: flutter build apk --debug
 
       - uses: actions/upload-artifact@v4
         with:
-          name: WHAT-NOW-AI-FIREBASE-REAL-LOGIN
+          name: WHAT-NOW-AI-FIREBASE-REAL-LOGIN-FIXED
           path: build/app/outputs/flutter-apk/app-debug.apk
