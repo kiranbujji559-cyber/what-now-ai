@@ -16,45 +16,53 @@ jobs:
 
       - name: Setup Firebase & Android
         run: |
-          # Save firebase file
           mkdir -p /tmp/save
           if [ -f android/app/google-services.json ]; then cp android/app/google-services.json /tmp/save/; echo "FOUND REAL FILE in android/app"; fi
-          if [ -f google-services.json ]; then cp google-services.json /tmp/save/google-services.json; echo "FOUND in root"; fi
-          cp lib/main.dart /tmp/main.dart
-          cp pubspec.yaml /tmp/pubspec.yaml
+          if [ -f google-services.json ]; then cp google-services.json /tmp/save/google-services.json; fi
+          cp lib/main.dart /tmp/main.dart || true
+          cp pubspec.yaml /tmp/pubspec.yaml || true
           
-          # Only create android if missing
           if [ ! -d android ]; then
             flutter create --project-name what_now_ai --platforms=android --org com.example .
           fi
           
-          cp /tmp/main.dart lib/main.dart
-          cp /tmp/pubspec.yaml pubspec.yaml
-          
-          # Restore firebase file
+          cp /tmp/main.dart lib/main.dart || true
+          cp /tmp/pubspec.yaml pubspec.yaml || true
           mkdir -p android/app
           if [ -f /tmp/save/google-services.json ]; then cp /tmp/save/google-services.json android/app/google-services.json; echo "RESTORED REAL google-services.json!"; ls -lh android/app/google-services.json; fi
           
-          # Add google-services plugin if missing
-          if ! grep -q "google-services" android/app/build.gradle; then
-            echo "Adding google-services plugin..."
-            sed -i "s/id \"com.android.application\"/id \"com.android.application\"\n    id \"com.google.gms.google-services\"/" android/app/build.gradle
+          echo "Checking gradle files:"
+          ls android/app/build.gradle* || true
+          ls android/build.gradle* || true
+          
+          # Try add google-services plugin - ignore errors
+          if [ -f android/app/build.gradle ]; then
+            if ! grep -q "google-services" android/app/build.gradle; then
+              sed -i 's/id "com.android.application"/id "com.android.application"\n    id "com.google.gms.google-services"/' android/app/build.gradle || true
+            fi
           fi
-          if ! grep -q "google-services" android/build.gradle; then
-            sed -i "s/dependencies {/dependencies {\n        classpath 'com.google.gms:google-services:4.4.1'/" android/build.gradle || true
-            sed -i "s/buildscript {/buildscript {\n    dependencies {\n        classpath 'com.google.gms:google-services:4.4.1'\n    }\n}\nbuildscript {/" android/build.gradle || echo "build.gradle already ok"
+          if [ -f android/app/build.gradle.kts ]; then
+            if ! grep -q "google-services" android/app/build.gradle.kts; then
+              sed -i 's/id("com.android.application")/id("com.android.application")\n    id("com.google.gms.google-services")/' android/app/build.gradle.kts || true
+            fi
+          fi
+          if [ -f android/build.gradle ]; then
+            if ! grep -q "google-services" android/build.gradle; then
+              sed -i "s/dependencies {/dependencies {\n        classpath 'com.google.gms:google-services:4.4.1'/" android/build.gradle || true
+            fi
+          fi
+          if [ -f android/build.gradle.kts ]; then
+            if ! grep -q "google-services" android/build.gradle.kts; then
+              sed -i "s/dependencies {/dependencies {\n        classpath(\"com.google.gms:google-services:4.4.1\")/" android/build.gradle.kts || true
+            fi
           fi
           
-          # Icons
           if [ -f assets/icon.png ]; then
-            mkdir -p android/app/src/main/res/mipmap-xxxhdpi android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-mdpi
             cp assets/icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png || true
             cp assets/icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png || true
             cp assets/icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png || true
             cp assets/icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png || true
             cp assets/icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png || true
-            cp assets/icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png || true
-            cp assets/icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png || true
           fi
 
       - run: flutter pub get
@@ -62,5 +70,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: WHAT-NOW-AI-FIREBASE-REAL-LOGIN-FIXED
+          name: WHAT-NOW-AI-FIREBASE-REAL-LOGIN
           path: build/app/outputs/flutter-apk/app-debug.apk
