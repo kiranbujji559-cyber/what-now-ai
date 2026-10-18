@@ -11,13 +11,13 @@ jobs:
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6'
+          flutter-version: '3.22.3'
           channel: 'stable'
 
       - name: Build APK Real Firebase
         run: |
           mkdir -p /tmp/save
-          cp android/app/google-services.json /tmp/save/ 2>/dev/null && echo "SAVED google-services.json" || echo "No file in android/app"
+          cp android/app/google-services.json /tmp/save/ 2>/dev/null && echo "SAVED" || echo "No file"
           cp google-services.json /tmp/save/google-services.json 2>/dev/null || true
           cp lib/main.dart /tmp/main.dart
           cp pubspec.yaml /tmp/pubspec.yaml
@@ -28,24 +28,18 @@ jobs:
           cp /tmp/main.dart lib/main.dart
           cp /tmp/pubspec.yaml pubspec.yaml
           mkdir -p android/app
-          cp /tmp/save/google-services.json android/app/google-services.json && echo "RESTORED REAL JSON" && ls -lh android/app/google-services.json
+          cp /tmp/save/google-services.json android/app/google-services.json && echo "RESTORED" && ls -lh android/app/google-services.json
           
           python3 << 'PY'
           import pathlib
-          p = pathlib.Path("android/build.gradle")
-          if p.exists():
-              t = p.read_text()
-              if "google-services" not in t:
-                  t = t.replace("dependencies {", "dependencies {\n        classpath 'com.google.gms:google-services:4.4.0'")
-                  p.write_text(t)
-                  print("Fixed android/build.gradle")
-          p = pathlib.Path("android/build.gradle.kts")
-          if p.exists():
-              t = p.read_text()
-              if "google-services" not in t:
-                  t = t.replace("dependencies {", "dependencies {\n        classpath(\"com.google.gms:google-services:4.4.0\")")
-                  p.write_text(t)
-                  print("Fixed android/build.gradle.kts")
+          for path in ["android/build.gradle", "android/build.gradle.kts"]:
+              p = pathlib.Path(path)
+              if p.exists():
+                  t = p.read_text()
+                  if "google-services" not in t:
+                      t = t.replace("dependencies {", "dependencies {\n        classpath 'com.google.gms:google-services:4.4.0'\n        classpath \"com.google.gms:google-services:4.4.0\"")
+                      p.write_text(t)
+                      print(f"Fixed {path}")
           for path in ["android/app/build.gradle", "android/app/build.gradle.kts"]:
               p = pathlib.Path(path)
               if p.exists():
