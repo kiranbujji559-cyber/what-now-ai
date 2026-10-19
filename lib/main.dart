@@ -158,7 +158,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _handleFeature(String id) async {
     setState(()=>_selectedType=id);
     switch(id){
-      case 'paste': FlutterClipboard.paste().then((v){ setState(()=>_input=v); }); break;
+      case 'paste': Clipboard.getData('text/plain').then((value){ setState(()=>_input=value?.text ?? ''); }); break;
       case 'photo': final picked=await ImagePicker().pickImage(source: ImageSource.gallery); if(picked!=null){ setState(()=>_pickedFile=File(picked.path)); setState(()=>_input="Photo: ${picked.name}"); } break;
       case 'file': final res=await FilePicker.platform.pickFiles(); if(res!=null){ setState(()=>_pickedFile=File(res.files.first.path!)); setState(()=>_input="File: ${res.files.first.name}"); } break;
       case 'voice': setState(()=>_input="Voice message recorded"); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Voice recorded (real)"))); break;
@@ -200,9 +200,12 @@ class ResultPage extends StatelessWidget {
     if(category=='job') return "💼 REAL JOB ANALYSIS:\n\nInput: $input\n\nReal jobs never ask for money!";
     return "🛡️ REAL AI ANALYSIS for $category:\n\nInput: $input\n\nChecked against 1000+ scam patterns\n${input.toLowerCase().contains('urgent')?'⚠️ URGENCY = SCAM TACTIC!':'✅ No urgency'}\n\nStay cautious!";
   }
-  @override Widget build(BuildContext context){
-    return Scaffold(appBar: AppBar(title: Text("$category Analysis")), body: Padding(padding: const EdgeInsets.all(20), child: SingleChildScrollView(child: Text(_getRealAnalysis(), style: const TextStyle(fontSize:16,height:1.5)))));
-  }
+@override Widget build(BuildContext context){
+return Scaffold(appBar: AppBar(title: Text("$category Analysis")), body: Padding(padding: const EdgeInsets.all(20), child: Column(children: [
+Text(_getRealAnalysis()),
+SizedBox(height: 20),
+ElevatedButton(onPressed: (){ Clipboard.setData(ClipboardData(text: _getRealAnalysis())); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Copied!'))); }, child: Text('Copy Result')),
+])));
 }
 
 class HistoryPage extends StatelessWidget {
