@@ -12,23 +12,26 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.3'
-          channel: 'stable'
       - name: Build REAL APK AAB
         run: |
+          cp android/app/google-services.json /tmp/g.json || echo "backup"
           if [ ! -f "android/build.gradle" ]; then
             flutter create . --platforms=android --project-name what_now_ai --org com.example
           fi
+          mkdir -p android/app
+          cp /tmp/g.json android/app/google-services.json || true
+          cp google-services.json android/app/google-services.json || true
           python3 << 'PY'
           import pathlib
-          b = pathlib.Path("android/build.gradle")
-          t = b.read_text()
+          b=pathlib.Path("android/build.gradle")
+          t=b.read_text()
           if "google-services" not in t:
-              t = t.replace("dependencies {", "dependencies {\n        classpath 'com.google.gms:google-services:4.4.0'", 1)
+              t=t.replace("dependencies {","dependencies {\n        classpath 'com.google.gms:google-services:4.4.0'",1)
               b.write_text(t)
-          a = pathlib.Path("android/app/build.gradle")
-          t2 = a.read_text()
+          a=pathlib.Path("android/app/build.gradle")
+          t2=a.read_text()
           if "google-services" not in t2:
-              t2 = t2.replace("apply plugin: 'com.android.application'", "apply plugin: 'com.android.application'\napply plugin: 'com.google.gms.google-services'")
+              t2=t2.replace("apply plugin: 'com.android.application'","apply plugin: 'com.android.application'\napply plugin: 'com.google.gms.google-services'")
               a.write_text(t2)
           PY
           flutter pub get
