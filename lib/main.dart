@@ -364,32 +364,104 @@ const SettingsPage({required this.userName, super.key});
 @override
 State createState() => _SetState();
 }
-class SetState extends State {
-bool notif = true;
-void open(String t, String m) => Navigator.push(context, MaterialPageRoute(builder: () => Scaffold(backgroundColor: const Color(0xFF0A102E), appBar: AppBar(backgroundColor: const Color(0xFF0A102E), title: Text(t)), body: Padding(padding: const EdgeInsets.all(16), child: Text(m, style: const TextStyle(fontSize: 15, height: 1.5))))));
-@override
-Widget build(BuildContext context) => SafeArea(child: Padding(padding: const EdgeInsets.all(16), child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-const Text("Settings", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-const SizedBox(height: 12),
-Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: const Color(0xFF1C2340), borderRadius: BorderRadius.circular(14)), child: Row(children: [
-ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset('assets/icon.png', width: 44, height: 44)),
-const SizedBox(width: 12),
-const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("WHAT NOW AI", style: TextStyle(fontWeight: FontWeight.bold)), Text("v1.0 Real AI App", style: TextStyle(color: Colors.white54, fontSize: 12))])
-])),
-const SizedBox(height: 12),
-_tile(Icons.person_rounded, "Account", "Manage your profile", () => open("Account", "Logged in as: ${widget.userName}\nStatus: Verified")),
-_tile(Icons.notifications_rounded, "Notifications", notif ? "Reminders & alerts: ON" : "Alerts: OFF", () => setState(() => notif = !notif)),
-_tile(Icons.dark_mode_rounded, "Appearance", "Dark mode", () => open("Appearance", "Dark Mode is optimized for battery & eye comfort.")),
-_tile(Icons.language_rounded, "Language", appLanguage, () async {
-final next = appLanguage == "English" ? "Telugu" : (appLanguage == "Telugu" ? "Hindi" : "English");
-final prefs = await SharedPreferences.getInstance();
-await prefs.setString('app_lang', next);
-setState(() => appLanguage = next);
-}),
-_tile(Icons.shield_rounded, "Privacy & Security", "Your data is safe", () => open("Privacy & Security", "Your data is analyzed securely via encrypted AI and stored locally.")),
-_tile(Icons.help_rounded, "Help & Support", "Get help", () => open("Help & Support", "Contact: support@whatnowai.com")),
-const SizedBox(height: 12),
-InkWell(onTap: () => open("Go Pro", "Unlock unlimited PDF analysis & priority Scam Shield!"), child: Container(width: double.infinity, padding: const EdgeInsets.all(16), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF7B2CBF), Color(0xFF9D4EDD)]), borderRadius: BorderRadius.circular(14)), child: const Row(children: [Icon(Icons.workspace_premium, color: Colors.amber), SizedBox(width: 10), Text("Go Pro - Premium benefits", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15))]))),
-]))));
-Widget _tile(IconData ic, String t, String sub, VoidCallback tap) => Padding(padding: const EdgeInsets.only(bottom: 8), child: ListTile(onTap: tap, tileColor: const Color(0xFF1C2340), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), leading: Icon(ic, color: Colors.white70), title: Text(t, style: const TextStyle(fontSize: 14)), subtitle: Text(sub, style: const TextStyle(color: Colors.white54, fontSize: 12)), trailing: const Icon(Icons.chevron_right, color: Colors.white38)));
+class SettingsPage extends StatefulWidget {
+  final String userName;
+  const SettingsPage({required this.userName, super.key});
+  @override
+  State<SettingsPage> createState() => _SetState();
+}
+
+class _SetState extends State<SettingsPage> {
+  bool notif = true;
+
+  void open(String t, String m) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: const Color(0xFF0A102E),
+          appBar: AppBar(backgroundColor: const Color(0xFF0A102E), title: Text(t)),
+          body: Padding(padding: const EdgeInsets.all(16), child: Text(m, style: const TextStyle(fontSize: 15, height: 1.5))),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Settings", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: const Color(0xFF1C2340), borderRadius: BorderRadius.circular(14)),
+                child: Row(
+                  children: [
+                    ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset('assets/icon.png', width: 44, height: 44)),
+                    const SizedBox(width: 12),
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("WHAT NOW AI", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text("v1.0 Real AI App", style: TextStyle(color: Colors.white54, fontSize: 12)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _tile(Icons.person_rounded, "Account", "Manage your profile", () => open("Account", "Logged in as: ${widget.userName}\nStatus: Verified")),
+              _tile(Icons.notifications_rounded, "Notifications", notif ? "Reminders & alerts: ON" : "Alerts: OFF", () => setState(() => notif = !notif)),
+              _tile(Icons.dark_mode_rounded, "Appearance", "Dark mode", () => open("Appearance", "Dark Mode is active.")),
+              _tile(Icons.language_rounded, "Language", appLanguage, () async {
+                final next = appLanguage == "English" ? "Telugu" : (appLanguage == "Telugu" ? "Hindi" : "English");
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('app_lang', next);
+                setState(() => appLanguage = next);
+              }),
+              _tile(Icons.shield_rounded, "Privacy & Security", "Your data is safe", () => open("Privacy & Security", "Your data is analyzed securely via encrypted AI and stored locally.")),
+              _tile(Icons.help_rounded, "Help & Support", "Get help", () => open("Help & Support", "Contact: support@whatnowai.com")),
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: () => open("Go Pro", "Unlock unlimited PDF analysis & priority Scam Shield!"),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF7B2CBF), Color(0xFF9D4EDD)]), borderRadius: BorderRadius.circular(14)),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.workspace_premium, color: Colors.amber),
+                      SizedBox(width: 10),
+                      Text("Go Pro - Premium benefits", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _tile(IconData ic, String t, String sub, VoidCallback tap) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        onTap: tap,
+        tileColor: const Color(0xFF1C2340),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        leading: Icon(ic, color: Colors.white70),
+        title: Text(t, style: const TextStyle(fontSize: 14)),
+        subtitle: Text(sub, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white38),
+      ),
+    );
+  }
 }
