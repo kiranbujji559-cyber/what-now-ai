@@ -2,20 +2,17 @@ name: what_now_ai
 description: WHAT NOW AI - Send anything Get clear actions
 publish_to: 'none'
 version: 1.0.0+1
-
 environment:
   sdk: ">=3.0.0 <4.0.0"
-
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.1
-  image_picker: ^1.0.7
-  file_picker: ^8.0.5
-  speech_to_text: ^6.6.2
-  shared_preferences: ^2.2.3
-  url_launcher: ^6.2.5
-
+  http: any
+  image_picker: any
+  file_picker: any
+  speech_to_text: any
+  shared_preferences: any
+  url_launcher: any
 flutter:
   uses-material-design: true
   assets:
