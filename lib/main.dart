@@ -364,12 +364,6 @@ const SettingsPage({required this.userName, super.key});
 @override
 State createState() => _SetState();
 }
-class SettingsPage extends StatefulWidget {
-  final String userName;
-  const SettingsPage({required this.userName, super.key});
-  @override
-  State<SettingsPage> createState() => _SetState();
-}
 
 class _SetState extends State<SettingsPage> {
   bool notif = true;
@@ -445,11 +439,6 @@ class _SetState extends State<SettingsPage> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
   Widget _tile(IconData ic, String t, String sub, VoidCallback tap) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
