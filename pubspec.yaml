@@ -1,20 +1,21 @@
 name: what_now_ai
-description: WHAT NOW AI - Real Scam Detector
+description: WHAT NOW AI - Send anything Get clear actions
 publish_to: 'none'
 version: 1.0.0+1
+
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: ">=3.0.0 <4.0.0"
+
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core: 2.24.0
-  firebase_auth: 4.15.0
-  google_sign_in: 6.1.6
-  image_picker: 1.0.7
-  file_picker: 6.1.1
-  shared_preferences: 2.2.2
-  url_launcher: 6.2.1
-  share_plus: 7.2.1
+  http: ^1.2.1
+  image_picker: ^1.0.7
+  file_picker: ^8.0.5
+  speech_to_text: ^6.6.2
+  shared_preferences: ^2.2.3
+  url_launcher: ^6.2.5
+
 flutter:
   uses-material-design: true
   assets:
